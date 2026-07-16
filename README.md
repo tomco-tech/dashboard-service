@@ -1,16 +1,23 @@
-# Dashboard Service Utilisateur — mise à jour UI
+# Dashboard Service Utilisateur — V1.7
 
-Widget Grist multi-tables permettant de consolider le suivi RTU, Infra & Flux, EMM et Chantiers de conception.
+Évolutions principales :
 
-## Évolutions de cette version
+- filtre Service utilisateur placé en premier ;
+- filtres réunis dans un seul conteneur blanc ;
+- suppression des bandeaux et sous-titres « Services » / « Sujets » ;
+- recherche opérationnelle limitée à « Rechercher un mot clé », Statut et Priorité ;
+- sections RTU, Infra & Flux, EMM et Chantiers fermées par défaut ;
+- catégories EMM fermées par défaut ;
+- couleurs de données réservées à la priorité et aux échéances en retard ;
+- titre par défaut : « Dashboard Commun ».
 
-- titre dynamique selon le service, la communauté et le département sélectionnés ;
-- recherche Service Utilisateur placée en premier ;
-- filtres services sur fond `#e3e3fd` ;
-- listes déroulantes modernisées ;
-- suppression des libellés Référentiel / Pilotage et du versionnage visible ;
-- statut RTU « En attente complétion RTU » présenté en gris sans message supplémentaire ;
-- sections RTU, Infra & Flux, EMM et Chantiers de conception repliables ;
-- sous-catégories EMM plus lisibles et repliables.
+## Installation
 
-Le widget nécessite **Full document access** dans Grist.
+Publier `index.html` à la racine de GitHub Pages avec `.nojekyll`, puis utiliser l’URL du site dans un widget Custom Grist avec accès complet au document.
+
+
+## Ajustements V1.7
+
+- Titres de sections simplifiés : RTU, Réseau, Raccordement et Flux, EMM, Chantiers de Conception.
+- Lorsqu’un service utilisateur est sélectionné, la section RTU est automatiquement ouverte et affiche directement le détail du RTU, sans carte imbriquée ni bouton de repli.
+- Le RTU sélectionné reste visible indépendamment des filtres opérationnels Statut / Priorité.

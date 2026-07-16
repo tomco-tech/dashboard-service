@@ -248,8 +248,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--blue); box-shado
   justify-content: space-between;
   border-bottom: 1px solid var(--line);
 }
-.source-header h2 { margin: 2px 0 0; font-size: 17px; letter-spacing: -.015em; }
-.source-kicker { color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: .045em; text-transform: uppercase; }
+.source-header h2 { margin: 0; font-size: 17px; letter-spacing: -.015em; }
 .source-count { min-width: 32px; text-align: center; padding: 5px 8px; border-radius: 999px; background: #eef2f7; color: #445168; font-weight: 850; }
 .source-header__actions { display: flex; align-items: center; gap: 7px; }
 .collapse-toggle {
@@ -283,6 +282,34 @@ input:focus, select:focus, textarea:focus { border-color: var(--blue); box-shado
   grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
   gap: 9px;
 }
+
+/* Quand un service précis est sélectionné, le panneau RTU devient directement
+   la fiche détaillée du RTU, sans carte imbriquée ni mécanisme de repli. */
+.source-panel--rtu.is-single-service .source-header__actions { display: none; }
+.source-panel--rtu.is-single-service .source-header { border-bottom-color: var(--line); }
+.source-panel--rtu.is-single-service .source-list {
+  display: block !important;
+  max-height: none;
+  overflow: visible;
+  padding: 0;
+}
+.rtu-inline-detail {
+  padding: 14px 16px 16px;
+  cursor: pointer;
+  transition: background .16s ease;
+}
+.rtu-inline-detail:hover { background: #fafbfc; }
+.rtu-inline-detail__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.rtu-inline-detail__identity { min-width: 0; }
+.rtu-inline-detail__version { font-size: 14px; font-weight: 830; color: var(--ink); }
+.rtu-inline-detail__owner { margin-top: 3px; color: var(--muted); font-size: 11.5px; font-weight: 650; }
+.rtu-inline-detail .rtu-progress { margin-top: 12px; }
+.rtu-inline-detail .subject-description { -webkit-line-clamp: 4; }
 
 .empty-state {
   padding: 28px 14px;
@@ -757,7 +784,6 @@ body.loading .source-list, body.loading .kpi-bar, body.loading .service-profile 
       <section class="source-panel source-panel--rtu is-collapsed" data-source="rtu">
         <div class="source-header">
           <div>
-            <div class="source-kicker">Référentiel technique</div>
             <h2>RTU</h2>
           </div>
           <div class="source-header__actions">
@@ -773,8 +799,7 @@ body.loading .source-list, body.loading .kpi-bar, body.loading .service-profile 
       <section class="source-panel source-panel--infra is-collapsed" data-source="infra">
         <div class="source-header">
           <div>
-            <div class="source-kicker">Réseau, raccordement et flux</div>
-            <h2>Infra &amp; Flux</h2>
+            <h2>Réseau, Raccordement et Flux</h2>
           </div>
           <div class="source-header__actions">
             <span id="infraCount" class="source-count">0</span>
@@ -789,7 +814,6 @@ body.loading .source-list, body.loading .kpi-bar, body.loading .service-profile 
       <section class="source-panel source-panel--emm is-collapsed" data-source="emm">
         <div class="source-header">
           <div>
-            <div class="source-kicker">Services et configurations terminaux</div>
             <h2>EMM</h2>
           </div>
           <div class="source-header__actions">
@@ -805,8 +829,7 @@ body.loading .source-list, body.loading .kpi-bar, body.loading .service-profile 
       <section class="source-panel source-panel--conception is-collapsed" data-source="conception">
         <div class="source-header">
           <div>
-            <div class="source-kicker">Conception et mise en production</div>
-            <h2>Chantiers de conception</h2>
+            <h2>Chantiers de Conception</h2>
           </div>
           <div class="source-header__actions">
             <span id="conceptionCount" class="source-count">0</span>
@@ -1108,11 +1131,11 @@ let lastGlobalError = "";
 
 const sourceCollapseState = Object.assign(
   { rtu: true, infra: true, emm: true, conception: true },
-  readStoredState("grist_service_dashboard_collapsed_sources_v16")
+  readStoredState("grist_service_dashboard_collapsed_sources_v17")
 );
 const emmCategoryCollapseState = Object.assign(
   { kiosque: true, politique_verrouillage: true, wifi: true, messagerie: true, push_webapp: true, proxy_vip: true, autres: true },
-  readStoredState("grist_service_dashboard_collapsed_emm_categories_v16")
+  readStoredState("grist_service_dashboard_collapsed_emm_categories_v17")
 );
 
 const filters = {
@@ -1126,7 +1149,7 @@ const filters = {
   hideClosed: false
 };
 
-const WIDGET_VERSION = "1.6.0";
+const WIDGET_VERSION = "1.7.0";
 const API_TIMEOUT_MS = 6000;
 window.__GRIST_SERVICE_DASHBOARD_VERSION__ = WIDGET_VERSION;
 
@@ -1154,17 +1177,27 @@ function writeStoredState(key, value) {
 function applySourceCollapseState(sourceKey) {
   const panel = document.querySelector(`.source-panel[data-source="${sourceKey}"]`);
   const button = document.querySelector(`[data-collapse-source="${sourceKey}"]`);
-  const collapsed = Boolean(sourceCollapseState[sourceKey]);
-  if (panel) panel.classList.toggle("is-collapsed", collapsed);
+  const isDirectRtu = sourceKey === "rtu" && Boolean(selectedService);
+  if (panel) {
+    panel.classList.toggle("is-single-service", isDirectRtu);
+    panel.classList.toggle("is-collapsed", isDirectRtu ? false : Boolean(sourceCollapseState[sourceKey]));
+  }
   if (button) {
+    if (isDirectRtu) {
+      button.setAttribute("aria-expanded", "true");
+      button.title = "";
+      return;
+    }
+    const collapsed = Boolean(sourceCollapseState[sourceKey]);
     button.setAttribute("aria-expanded", String(!collapsed));
     button.title = collapsed ? "Développer la section" : "Réduire la section";
   }
 }
 
 function toggleSourcePanel(sourceKey) {
+  if (sourceKey === "rtu" && selectedService) return;
   sourceCollapseState[sourceKey] = !sourceCollapseState[sourceKey];
-  writeStoredState("grist_service_dashboard_collapsed_sources_v16", sourceCollapseState);
+  writeStoredState("grist_service_dashboard_collapsed_sources_v17", sourceCollapseState);
   applySourceCollapseState(sourceKey);
 }
 
@@ -1913,6 +1946,43 @@ function renderRtuCard(subject) {
   return card;
 }
 
+function renderRtuInlineDetail(subject) {
+  const detail = makeEl("div", "rtu-inline-detail");
+  detail.addEventListener("click", () => openDrawer(subject));
+
+  const top = makeEl("div", "rtu-inline-detail__top");
+  const identity = makeEl("div", "rtu-inline-detail__identity");
+  identity.appendChild(makeEl("div", "rtu-inline-detail__version", subject.title));
+  if (subject.owner) identity.appendChild(makeEl("div", "rtu-inline-detail__owner", `Porteur : ${subject.owner}`));
+  top.appendChild(identity);
+  const shownStatus = subject.rtuWaiting ? "En attente complétion RTU" : (subject.status || "Statut non renseigné");
+  addBadge(top, shownStatus, subject.rtuWaiting ? "badge--waiting" : statusBadgeClass(shownStatus));
+  detail.appendChild(top);
+
+  if (!subject.rtuWaiting) {
+    const progress = makeEl("div", "rtu-progress");
+    const line = makeEl("div", "rtu-progress__line");
+    line.appendChild(makeEl("span", "", `${subject.rtuState.completed}/${subject.rtuState.total} domaines complets ou N.A`));
+    line.appendChild(makeEl("span", "", `${subject.rtuState.percent}%`));
+    progress.appendChild(line);
+    const track = makeEl("div", "progress-track");
+    const bar = makeEl("div", "progress-bar");
+    bar.style.width = `${subject.rtuState.percent}%`;
+    track.appendChild(bar);
+    progress.appendChild(track);
+    detail.appendChild(progress);
+
+    const domains = makeEl("div", "domain-grid");
+    subject.rtuState.values.forEach(({ key, value }) => {
+      addBadge(domains, `${DOMAIN_LABELS[key]} : ${value || "Non renseigné"}`, statusBadgeClass(value));
+    });
+    detail.appendChild(domains);
+  }
+
+  if (subject.description) detail.appendChild(makeEl("div", "subject-description", truncate(subject.description, 300)));
+  return detail;
+}
+
 function normalizeEmmCategory(value) {
   const key = normalizeKey(value);
   if (key.includes("kiosque")) return "kiosque";
@@ -1992,7 +2062,7 @@ function renderEmmCategoryGroup(def, subjects, scopedSubjects = subjects) {
     group.classList.toggle("is-collapsed", nowCollapsed);
     header.setAttribute("aria-expanded", String(!nowCollapsed));
     header.title = nowCollapsed ? "Développer la catégorie" : "Réduire la catégorie";
-    writeStoredState("grist_service_dashboard_collapsed_emm_categories_v16", emmCategoryCollapseState);
+    writeStoredState("grist_service_dashboard_collapsed_emm_categories_v17", emmCategoryCollapseState);
   });
 
   return group;
@@ -2067,6 +2137,17 @@ function renderSourceList(sourceKey, subjects) {
     list.appendChild(error);
     return;
   }
+
+  if (sourceKey === "rtu" && selectedService) {
+    const subject = subjects[0];
+    if (!subject) {
+      list.appendChild(makeEl("div", "empty-state", "Aucun RTU renseigné pour ce service."));
+      return;
+    }
+    list.appendChild(renderRtuInlineDetail(subject));
+    return;
+  }
+
   if (!subjects.length) {
     list.appendChild(makeEl("div", "empty-state", "Aucun élément pour les filtres sélectionnés."));
     return;
@@ -2088,7 +2169,12 @@ function renderDashboard() {
   const subjects = activeSubjects();
   renderServiceProfile();
   renderKpis(subjects);
-  ["rtu", "infra", "emm", "conception"].forEach((source) => {
+
+  const selectedServiceRtu = selectedService
+    ? sortSubjects(serviceScoped.filter((subject) => subject.source === "rtu")).slice(0, 1)
+    : subjects.filter((subject) => subject.source === "rtu");
+  renderSourceList("rtu", selectedServiceRtu);
+  ["infra", "emm", "conception"].forEach((source) => {
     renderSourceList(source, subjects.filter((subject) => subject.source === source));
   });
 }
