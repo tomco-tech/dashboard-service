@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Dashboard Service Utilisateur</title>
+<title>Dashboard de tous les Services Utilisateurs</title>
   <style>
 :root {
   --bg: #f4f6fa;
@@ -416,7 +416,6 @@ body.loading .source-list, body.loading .kpi-bar, body.loading .service-profile 
 }
 @media (max-width: 800px) { .setup-banner { align-items: stretch; flex-direction: column; } }
 
-.version-chip{display:inline-flex;align-items:center;padding:3px 7px;border-radius:999px;background:#e8edff;color:#3157ff;font-size:10px;font-weight:800;letter-spacing:.04em}
 
 
 /* V1.4 — filtres en deux niveaux */
@@ -537,6 +536,99 @@ body.loading .source-list, body.loading .kpi-bar, body.loading .service-profile 
   .kpi-bar { grid-template-columns: 1fr; }
 }
 
+
+/* V1.5 — interface plus compacte et repliable */
+.filter-row--services {
+  grid-template-columns: 72px minmax(260px,1.45fr) minmax(140px,.8fr) minmax(125px,.7fr) minmax(150px,.85fr) minmax(150px,.85fr);
+  background: #e3e3fd;
+  border-color: #d5d5f6;
+}
+.filter-row__title { align-self: end; min-height: 38px; display: flex; align-items: center; }
+.filter-row__title small { display: none; }
+
+/* Modernise les listes déroulantes natives sans changer leur fonctionnement Grist. */
+select:not([multiple]) {
+  -webkit-appearance: none;
+  appearance: none;
+  padding-right: 36px;
+  border-color: #cfd7e4;
+  background-color: #ffffff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='M4 6l4 4 4-4' fill='none' stroke='%23526078' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 11px center;
+  background-size: 16px 16px;
+  box-shadow: 0 1px 2px rgba(16,24,40,.035);
+  transition: border-color .15s ease, background-color .15s ease, box-shadow .15s ease;
+}
+select:not([multiple]):hover { border-color: #aeb9ca; background-color: #fbfcff; }
+select:not([multiple]):focus { background-color: #fff; }
+
+.source-heading, .emm-category-heading { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.collapse-btn {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid #d9e0eb;
+  border-radius: 9px;
+  background: #f8fafc;
+  color: #536178;
+  transition: background .15s ease, border-color .15s ease, transform .15s ease;
+}
+.collapse-btn:hover { background: #eef2f7; border-color: #bdc7d5; }
+.collapse-chevron {
+  display: block;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform .18s ease;
+}
+.source-panel.is-collapsed .source-collapse-btn .collapse-chevron,
+.emm-category-group.is-collapsed .emm-collapse-btn .collapse-chevron {
+  transform: translateX(-1px) rotate(-45deg);
+}
+.source-panel.is-collapsed .source-list { display: none; }
+.source-panel.is-collapsed .source-header { border-bottom-color: transparent; }
+.source-panel.is-collapsed { align-self: start; }
+
+.badge--waiting {
+  background: #e5e7eb;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+/* Séparation plus nette des catégories EMM. */
+.emm-category-grid { gap: 12px; }
+.emm-category-group {
+  border: 1px solid #d8dfeb;
+  border-left: 4px solid var(--category-color, #64748b);
+  background: #ffffff;
+  box-shadow: 0 5px 15px rgba(29,43,68,.055);
+}
+.emm-category-header {
+  min-height: 60px;
+  padding: 10px 12px 10px 9px;
+  background: #f5f6ff;
+}
+.emm-category-group.is-collapsed .emm-category-header { border-bottom-color: transparent; }
+.emm-category-group.is-collapsed .emm-category-body { display: none; }
+.emm-category-body { background: #fbfcff; }
+.emm-collapse-btn { width: 28px; height: 28px; flex-basis: 28px; background: #ffffff; }
+.emm-status-summary { max-width: 58%; }
+
+@media (max-width: 1250px) {
+  .filter-row--services { grid-template-columns: 80px minmax(230px,1.5fr) repeat(2,minmax(145px,1fr)); }
+  .filter-row--services .service-picker { grid-column: span 1; }
+}
+@media (max-width: 900px) {
+  .filter-row--services { grid-template-columns: 1fr 1fr; }
+  .filter-row--services .filter-row__title { grid-column: 1 / -1; min-height: auto; }
+  .filter-row--services .service-picker { grid-column: 1 / -1; }
+}
+
 </style>
   <script src="https://docs.getgrist.com/grist-plugin-api.js" onerror="document.getElementById('lastRefresh').textContent='Erreur : API Grist non chargée'"></script>
 </head>
@@ -544,7 +636,7 @@ body.loading .source-list, body.loading .kpi-bar, body.loading .service-profile 
   <div class="app-shell">
     <header class="topbar">
       <div class="brand-block">
-        <h1>Dashboard Service Utilisateur</h1><span class="version-chip">v1.4</span>
+        <h1 id="dashboardTitle">Dashboard de tous les Services Utilisateurs</h1>
         <span id="lastRefresh" class="last-refresh">Chargement…</span>
       </div>
       <div class="top-actions">
@@ -566,7 +658,16 @@ body.loading .source-list, body.loading .kpi-bar, body.loading .service-profile 
       <div class="filter-row filter-row--services">
         <div class="filter-row__title">
           <span>Services</span>
-          <small>Référentiel</small>
+        </div>
+
+        <div class="service-picker" id="servicePicker">
+          <label for="serviceSearch">Service utilisateur</label>
+          <div class="combobox-wrap">
+            <span class="search-icon" aria-hidden="true">⌕</span>
+            <input id="serviceSearch" type="search" autocomplete="off" placeholder="Tous les services utilisateurs" aria-expanded="false" aria-controls="serviceDropdown" />
+            <button id="clearServiceBtn" class="clear-input hidden" type="button" aria-label="Afficher tous les services">×</button>
+          </div>
+          <div id="serviceDropdown" class="combo-dropdown hidden" role="listbox"></div>
         </div>
 
         <div class="compact-filter">
@@ -581,16 +682,6 @@ body.loading .source-list, body.loading .kpi-bar, body.loading .service-profile 
           <select id="departmentFilter">
             <option value="">Tous les départements</option>
           </select>
-        </div>
-
-        <div class="service-picker" id="servicePicker">
-          <label for="serviceSearch">Service utilisateur</label>
-          <div class="combobox-wrap">
-            <span class="search-icon" aria-hidden="true">⌕</span>
-            <input id="serviceSearch" type="search" autocomplete="off" placeholder="Tous les services utilisateurs" aria-expanded="false" aria-controls="serviceDropdown" />
-            <button id="clearServiceBtn" class="clear-input hidden" type="button" aria-label="Afficher tous les services">×</button>
-          </div>
-          <div id="serviceDropdown" class="combo-dropdown hidden" role="listbox"></div>
         </div>
 
         <div class="compact-filter">
@@ -611,7 +702,6 @@ body.loading .source-list, body.loading .kpi-bar, body.loading .service-profile 
       <div class="filter-row filter-row--work">
         <div class="filter-row__title">
           <span>Sujets</span>
-          <small>Pilotage</small>
         </div>
 
         <div class="compact-filter compact-filter--search">
@@ -640,16 +730,21 @@ body.loading .source-list, body.loading .kpi-bar, body.loading .service-profile 
       </div>
     </section>
 
-    <section id="serviceProfile" class="service-profile service-profile--all"></section>
+    <section id="serviceProfile" class="service-profile hidden"></section>
 
     <section id="kpiBar" class="kpi-bar" aria-label="Indicateurs consolidés"></section>
 
     <main class="dashboard-grid">
       <section class="source-panel source-panel--rtu" data-source="rtu">
         <div class="source-header">
-          <div>
-            <div class="source-kicker">Référentiel technique</div>
-            <h2>RTU</h2>
+          <div class="source-heading">
+            <button class="collapse-btn source-collapse-btn" type="button" data-source-toggle="rtu" aria-expanded="true" aria-label="Réduire RTU">
+              <span class="collapse-chevron" aria-hidden="true"></span>
+            </button>
+            <div>
+              <div class="source-kicker">Complétude du RTU</div>
+              <h2>RTU</h2>
+            </div>
           </div>
           <span id="rtuCount" class="source-count">0</span>
         </div>
@@ -658,9 +753,14 @@ body.loading .source-list, body.loading .kpi-bar, body.loading .service-profile 
 
       <section class="source-panel source-panel--infra" data-source="infra">
         <div class="source-header">
-          <div>
-            <div class="source-kicker">Réseau, raccordement et flux</div>
-            <h2>Infra &amp; Flux</h2>
+          <div class="source-heading">
+            <button class="collapse-btn source-collapse-btn" type="button" data-source-toggle="infra" aria-expanded="true" aria-label="Réduire Infra & Flux">
+              <span class="collapse-chevron" aria-hidden="true"></span>
+            </button>
+            <div>
+              <div class="source-kicker">Réseau, raccordement et flux</div>
+              <h2>Infra &amp; Flux</h2>
+            </div>
           </div>
           <span id="infraCount" class="source-count">0</span>
         </div>
@@ -669,9 +769,14 @@ body.loading .source-list, body.loading .kpi-bar, body.loading .service-profile 
 
       <section class="source-panel source-panel--emm" data-source="emm">
         <div class="source-header">
-          <div>
-            <div class="source-kicker">Services et configurations terminaux</div>
-            <h2>EMM</h2>
+          <div class="source-heading">
+            <button class="collapse-btn source-collapse-btn" type="button" data-source-toggle="emm" aria-expanded="true" aria-label="Réduire EMM">
+              <span class="collapse-chevron" aria-hidden="true"></span>
+            </button>
+            <div>
+              <div class="source-kicker">Services et configurations terminaux</div>
+              <h2>EMM</h2>
+            </div>
           </div>
           <span id="emmCount" class="source-count">0</span>
         </div>
@@ -680,9 +785,14 @@ body.loading .source-list, body.loading .kpi-bar, body.loading .service-profile 
 
       <section class="source-panel source-panel--conception" data-source="conception">
         <div class="source-header">
-          <div>
-            <div class="source-kicker">Conception et mise en production</div>
-            <h2>Chantiers de conception</h2>
+          <div class="source-heading">
+            <button class="collapse-btn source-collapse-btn" type="button" data-source-toggle="conception" aria-expanded="true" aria-label="Réduire Chantiers de conception">
+              <span class="collapse-chevron" aria-hidden="true"></span>
+            </button>
+            <div>
+              <div class="source-kicker">Conception et mise en production</div>
+              <h2>Chantiers de conception</h2>
+            </div>
           </div>
           <span id="conceptionCount" class="source-count">0</span>
         </div>
@@ -877,7 +987,7 @@ const EDIT_LAYOUTS = {
       { key: "category", label: "Catégorie", kind: "choice" },
       { key: "requestDate", label: "Date de la demande", kind: "date" }
     ]},
-    { title: "Pilotage", fields: [
+    { title: "Suivi", fields: [
       { key: "priority", label: "Priorité DUD", kind: "choice" },
       { key: "status", label: "Statut", kind: "choice" },
       { key: "stage", label: "Étape", kind: "choice" },
@@ -898,7 +1008,7 @@ const EDIT_LAYOUTS = {
       { key: "rtu", label: "RTU", kind: "choice" },
       { key: "sprint", label: "Sprint", kind: "choice" }
     ]},
-    { title: "Pilotage", fields: [
+    { title: "Suivi", fields: [
       { key: "status", label: "Statut", kind: "choice" },
       { key: "priority", label: "Priorité", kind: "choice" },
       { key: "desiredDate", label: "Date souhaitée", kind: "date" },
@@ -920,7 +1030,7 @@ const EDIT_LAYOUTS = {
       { key: "category", label: "Catégorie", kind: "choice" },
       { key: "owners", label: "Porteurs", kind: "actor", full: true }
     ]},
-    { title: "Pilotage", fields: [
+    { title: "Suivi", fields: [
       { key: "status", label: "Statut", kind: "choice" },
       { key: "stage", label: "Étape", kind: "choice" },
       { key: "mepDate", label: "Date cible de mise en production", kind: "date" },
@@ -953,6 +1063,15 @@ const EMM_CATEGORY_DEFS = [
   { key: "push_webapp", label: "Push Lien Web App" },
   { key: "proxy_vip", label: "Proxy VIP" }
 ];
+const EMM_CATEGORY_COLORS = {
+  kiosque: "#5b5bd6",
+  politique_verrouillage: "#8b5cf6",
+  wifi: "#1684b8",
+  messagerie: "#2563eb",
+  push_webapp: "#0f766e",
+  proxy_vip: "#b45309",
+  autres: "#64748b"
+};
 
 const PRIORITY_RANK = { p0: 0, haute: 0, p1: 1, p2: 2, moyenne: 2, p3: 3, basse: 3 };
 
@@ -976,6 +1095,8 @@ let serviceComboIndex = -1;
 let currentAccessLevel = "unknown";
 let setupAutoOpened = false;
 let lastGlobalError = "";
+const collapsedSources = new Set();
+const collapsedEmmCategories = new Set();
 
 const filters = {
   community: "",
@@ -988,7 +1109,7 @@ const filters = {
   hideClosed: false
 };
 
-const WIDGET_VERSION = "1.4.0";
+const WIDGET_VERSION = "1.5.0";
 const API_TIMEOUT_MS = 6000;
 window.__GRIST_SERVICE_DASHBOARD_VERSION__ = WIDGET_VERSION;
 
@@ -1011,7 +1132,7 @@ function reportStartupError(error) {
   console.error("Dashboard startup error", error);
   lastGlobalError = message;
   const refresh = $("lastRefresh");
-  if (refresh) refresh.textContent = `v${WIDGET_VERSION} · Erreur de démarrage`;
+  if (refresh) refresh.textContent = "Erreur de démarrage";
   try { renderSetupBanner(); } catch (_) { /* Keep the page usable. */ }
 }
 
@@ -1025,7 +1146,7 @@ window.addEventListener("unhandledrejection", (event) => {
 // Bind the local interface before touching the Grist API.  This guarantees that
 // the Configurer button still opens even when the Grist bridge fails.
 bindEvents();
-if ($("lastRefresh")) $("lastRefresh").textContent = `JS v${WIDGET_VERSION} chargé — connexion à Grist…`;
+if ($("lastRefresh")) $("lastRefresh").textContent = "Connexion à Grist…";
 
 try {
   // Do not pass onEditOptions here: older Grist instances may not support that
@@ -1142,6 +1263,7 @@ function isOverdue(dateValue, status) {
 
 function statusBadgeClass(value) {
   const key = normalizeStatus(value);
+  if (key.includes("attentecompletionrtu")) return "badge--waiting";
   if (key.includes("incomplet") || key.includes("attente") || key.includes("nouveau") || key.includes("cours") || key.includes("test")) return "badge--incomplete";
   if (key === "complet" || key === "complete" || isClosedStatus(value)) return "badge--complete";
   if (key === "na" || key.includes("nonapplicable")) return "badge--na";
@@ -1642,16 +1764,41 @@ function fillSimpleSelect(select, values, firstLabel, current) {
   select.value = values.includes(current) ? current : "";
 }
 
+function updateDashboardTitle() {
+  let title = "Dashboard de tous les Services Utilisateurs";
+  if (selectedService) {
+    title = `Dashboard du Service ${selectedService.label}`;
+  } else if (filters.community && filters.department) {
+    title = `Dashboard de la Communauté ${filters.community} dans le Département ${filters.department}`;
+  } else if (filters.community) {
+    title = `Dashboard de la Communauté ${filters.community}`;
+  } else if (filters.department) {
+    title = `Dashboard du Département ${filters.department}`;
+  }
+  const titleNode = $("dashboardTitle");
+  if (titleNode) titleNode.textContent = title;
+  document.title = title;
+}
+
+function setSourceCollapsed(sourceKey, collapsed) {
+  const panel = document.querySelector(`.source-panel[data-source="${sourceKey}"]`);
+  const button = document.querySelector(`[data-source-toggle="${sourceKey}"]`);
+  if (!panel || !button) return;
+  panel.classList.toggle("is-collapsed", collapsed);
+  button.setAttribute("aria-expanded", String(!collapsed));
+  button.setAttribute("aria-label", `${collapsed ? "Déployer" : "Réduire"} ${panel.querySelector("h2")?.textContent || sourceKey}`);
+  if (collapsed) collapsedSources.add(sourceKey); else collapsedSources.delete(sourceKey);
+}
+
+function toggleSourcePanel(sourceKey) {
+  setSourceCollapsed(sourceKey, !collapsedSources.has(sourceKey));
+}
+
 function renderServiceProfile() {
   const profile = $("serviceProfile");
   profile.replaceChildren();
   if (!selectedService) {
-    const visibleServices = services.filter(serviceMatchesDimensionFilters);
-    profile.className = "service-profile service-profile--all";
-    const block = makeEl("div", "profile-main");
-    block.appendChild(makeEl("div", "profile-title", hasServiceDimensionFilters() ? `${visibleServices.length} service(s) utilisateur(s) filtré(s)` : "Tous les services utilisateurs"));
-    block.appendChild(makeEl("div", "profile-subtitle", "Vue consolidée des RTU, sujets Infra & Flux, EMM et chantiers de conception."));
-    profile.appendChild(block);
+    profile.className = "service-profile hidden";
     return;
   }
 
@@ -1711,9 +1858,7 @@ function renderRtuCard(subject) {
   addBadge(top, shownStatus, statusBadgeClass(shownStatus));
   card.appendChild(top);
 
-  if (subject.rtuWaiting) {
-    card.appendChild(makeEl("div", "rtu-waiting", "Le RTU n’a pas encore été transmis ou complété. Les statuts détaillés par domaine ne sont pas affichés."));
-  } else {
+  if (!subject.rtuWaiting) {
     const progress = makeEl("div", "rtu-progress");
     const line = makeEl("div", "rtu-progress__line");
     line.appendChild(makeEl("span", "", `${subject.rtuState.completed}/${subject.rtuState.total} domaines complets ou N.A`));
@@ -1769,12 +1914,32 @@ function singleServiceEmmSummary(subjects, scopedSubjects) {
 }
 
 function renderEmmCategoryGroup(def, subjects, scopedSubjects = subjects) {
-  const group = makeEl("section", `emm-category-group ${subjects.length ? "" : "emm-category-group--empty"}`.trim());
+  const isCollapsed = collapsedEmmCategories.has(def.key);
+  const group = makeEl("section", `emm-category-group emm-category-group--${def.key} ${subjects.length ? "" : "emm-category-group--empty"} ${isCollapsed ? "is-collapsed" : ""}`.trim());
+  group.style.setProperty("--category-color", EMM_CATEGORY_COLORS[def.key] || EMM_CATEGORY_COLORS.autres);
+
   const header = makeEl("div", "emm-category-header");
+  const heading = makeEl("div", "emm-category-heading");
+  const toggle = makeEl("button", "collapse-btn emm-collapse-btn");
+  toggle.type = "button";
+  toggle.setAttribute("aria-expanded", String(!isCollapsed));
+  toggle.setAttribute("aria-label", `${isCollapsed ? "Déployer" : "Réduire"} ${def.label}`);
+  toggle.appendChild(makeEl("span", "collapse-chevron"));
+  toggle.addEventListener("click", (event) => {
+    event.stopPropagation();
+    const collapsed = !group.classList.contains("is-collapsed");
+    group.classList.toggle("is-collapsed", collapsed);
+    toggle.setAttribute("aria-expanded", String(!collapsed));
+    toggle.setAttribute("aria-label", `${collapsed ? "Déployer" : "Réduire"} ${def.label}`);
+    if (collapsed) collapsedEmmCategories.add(def.key); else collapsedEmmCategories.delete(def.key);
+  });
+  heading.appendChild(toggle);
+
   const titleWrap = makeEl("div");
   titleWrap.appendChild(makeEl("div", "emm-category-title", def.label));
   titleWrap.appendChild(makeEl("div", "emm-category-subtitle", `${subjects.length} sujet(s)`));
-  header.appendChild(titleWrap);
+  heading.appendChild(titleWrap);
+  header.appendChild(heading);
 
   const summary = makeEl("div", "emm-status-summary");
   if (selectedService) {
@@ -1880,6 +2045,7 @@ function renderSourceList(sourceKey, subjects) {
 
 function renderDashboard() {
   refreshServiceDimensionFilters();
+  updateDashboardTitle();
   const all = allSubjects();
   const serviceScoped = all.filter(subjectMatchesServiceScope);
   refreshFilterOptions(serviceScoped);
@@ -2268,7 +2434,7 @@ async function loadAll() {
   const sequence = ++loadSequence;
   document.body.classList.add("loading");
   lastGlobalError = "";
-  if ($("lastRefresh")) $("lastRefresh").textContent = `v${WIDGET_VERSION} — lecture des tables…`;
+  if ($("lastRefresh")) $("lastRefresh").textContent = "Lecture des tables…";
   try {
     if (currentAccessLevel !== "unknown" && currentAccessLevel !== "full") {
       runtimeTables = {};
@@ -2295,7 +2461,7 @@ async function loadAll() {
       });
     }).catch((error) => console.warn("Métadonnées ignorées", error));
     if (selectedService && !serviceById.has(selectedService.id)) selectedService = null;
-    $("lastRefresh").textContent = `v${WIDGET_VERSION} · Actualisé à ${new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`;
+    $("lastRefresh").textContent = `Actualisé à ${new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`;
     renderDashboard();
     renderSetupBanner();
     const missing = requiredTablesMissing();
@@ -2316,7 +2482,7 @@ async function loadAll() {
 function openSettings() {
   populateSettings();
   const diag = $("settingsDiagnostic");
-  if (diag) diag.textContent = `Widget v${WIDGET_VERSION}\n${tableDiagnosticText()}\n\nTables visibles via API : ${allTableIds.length ? allTableIds.join(", ") : "aucune / API non disponible"}`;
+  if (diag) diag.textContent = `Diagnostic du widget\n${tableDiagnosticText()}\n\nTables visibles via API : ${allTableIds.length ? allTableIds.join(", ") : "aucune / API non disponible"}`;
   $("settingsBackdrop").classList.remove("hidden");
   $("settingsModal").classList.remove("hidden");
   $("settingsModal").setAttribute("aria-hidden", "false");
@@ -2422,6 +2588,9 @@ async function autoDetectSettings() {
 }
 
 function bindEvents() {
+  document.querySelectorAll("[data-source-toggle]").forEach((button) => {
+    button.addEventListener("click", () => toggleSourcePanel(button.dataset.sourceToggle));
+  });
   $("refreshBtn").addEventListener("click", loadAll);
   $("settingsBtn").addEventListener("click", openSettings);
   $("setupConfigBtn").addEventListener("click", openSettings);

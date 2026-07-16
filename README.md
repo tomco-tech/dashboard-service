@@ -1,19 +1,16 @@
-# Dashboard Service Utilisateur — V1.4
+# Dashboard Service Utilisateur — mise à jour UI
 
-Version monofichier (`index.html`) du dashboard Grist multi-tables.
+Widget Grist multi-tables permettant de consolider le suivi RTU, Infra & Flux, EMM et Chantiers de conception.
 
-## Évolutions V1.4
+## Évolutions de cette version
 
-- statuts RTU et domaines compatibles avec des colonnes texte, Choice ou Reference;
-- statut **En attente complétion RTU** affiché sans détail des domaines lorsque le RTU n’est pas encore transmis;
-- suppression du KPI **RTU à compléter**;
-- KPI **Urgents** renommé **P0 ou P1**;
-- EMM regroupé par catégories : Kiosque, Politique Verrouillage, Wi-Fi, Messagerie, Push Lien Web App et Proxy VIP;
-- synthèse du nombre de sujets par statut pour chaque catégorie EMM;
-- statut synthétique par catégorie lorsqu’un seul service utilisateur est sélectionné;
-- filtres séparés entre référentiel des services et sujets opérationnels;
-- nouveaux filtres Communauté, Département, Statut déploiement et Priorité déploiement;
-- liste des services utilisateurs recalculée selon les filtres opérationnels actifs;
-- édition améliorée des colonnes Reference génériques.
+- titre dynamique selon le service, la communauté et le département sélectionnés ;
+- recherche Service Utilisateur placée en premier ;
+- filtres services sur fond `#e3e3fd` ;
+- listes déroulantes modernisées ;
+- suppression des libellés Référentiel / Pilotage et du versionnage visible ;
+- statut RTU « En attente complétion RTU » présenté en gris sans message supplémentaire ;
+- sections RTU, Infra & Flux, EMM et Chantiers de conception repliables ;
+- sous-catégories EMM plus lisibles et repliables.
 
-Le widget nécessite **Full document access**.
+Le widget nécessite **Full document access** dans Grist.
