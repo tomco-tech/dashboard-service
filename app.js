@@ -237,17 +237,31 @@ let lastGlobalError = "";
 
 const filters = { search: "", status: "", priority: "", hideClosed: false };
 
+const API_TIMEOUT_MS = 8000;
+
+function withTimeout(promise, label, timeoutMs = API_TIMEOUT_MS) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`${label} : délai d’attente dépassé (${Math.round(timeoutMs / 1000)} s)`)), timeoutMs);
+  });
+  return Promise.race([Promise.resolve(promise), timeout]).finally(() => clearTimeout(timer));
+}
+
 grist.ready({
   requiredAccess: "full",
   onEditOptions: () => openSettings()
 });
 
-grist.onOptions((options, interaction) => {
-  optionsReceived = true;
-  widgetOptions = options || {};
-  currentAccessLevel = interaction?.access_level || interaction?.accessLevel || "unknown";
-  if (initialLoadStarted) loadAll();
-});
+if (typeof grist.onOptions === "function") {
+  grist.onOptions((options, interaction) => {
+    optionsReceived = true;
+    widgetOptions = options || {};
+    currentAccessLevel = interaction?.access_level || interaction?.accessLevel || "unknown";
+    if (initialLoadStarted) loadAll();
+  });
+} else {
+  console.warn("Cette instance Grist ne fournit pas onOptions ; utilisation du mode de compatibilité.");
+}
 
 function normalizeKey(value) {
   return asText(value)
@@ -358,36 +372,51 @@ function priorityBadgeClass(value) {
 
 async function safeFetchTable(tableId) {
   if (!tableId) throw new Error("Identifiant de table vide");
-  return grist.docApi.fetchTable(tableId);
+  return withTimeout(grist.docApi.fetchTable(tableId), `Lecture de la table ${tableId}`);
+}
+
+async function refreshTableIds() {
+  try {
+    const ids = await withTimeout(grist.docApi.listTables(), "Lecture de la liste des tables");
+    allTableIds = Array.isArray(ids) ? ids : [];
+  } catch (error) {
+    console.warn("Liste des tables indisponible.", error);
+    allTableIds = [];
+  }
+  return allTableIds;
 }
 
 async function findTableId(def, override) {
-  const attempts = [];
-  if (override) attempts.push(override);
-  attempts.push(...def.candidates);
-  for (const tableId of [...new Set(attempts.filter(Boolean))]) {
-    try {
-      await safeFetchTable(tableId);
-      return tableId;
-    } catch (_) { /* Essai suivant. */ }
+  if (!allTableIds.length) await refreshTableIds();
+
+  const visibleIds = allTableIds.filter((id) => !String(id).startsWith("_grist_"));
+  const requested = [override, ...def.candidates].filter(Boolean);
+
+  // Priorité aux identifiants exacts retournés par Grist. Cela évite de lancer
+  // plusieurs fetchTable sur des noms inexistants, qui peuvent rester bloqués
+  // sur certaines instances.
+  for (const candidate of requested) {
+    const exact = visibleIds.find((id) => id === candidate);
+    if (exact) return exact;
+  }
+  for (const candidate of requested) {
+    const normalized = visibleIds.find((id) => normalizeKey(id) === normalizeKey(candidate));
+    if (normalized) return normalized;
   }
 
-  if (!allTableIds.length) {
-    try { allTableIds = await grist.docApi.listTables(); } catch (_) { allTableIds = []; }
-  }
+  const fuzzy = visibleIds.find((id) => def.fuzzy.every((part) => normalizeKey(id).includes(normalizeKey(part))));
+  if (fuzzy) return fuzzy;
 
-  const exact = allTableIds.find((id) => def.candidates.some((candidate) => normalizeKey(candidate) === normalizeKey(id)));
-  if (exact) return exact;
-
-  const found = allTableIds.find((id) => def.fuzzy.every((part) => normalizeKey(id).includes(normalizeKey(part))));
-  return found || null;
+  // Si listTables n'est pas disponible mais qu'un identifiant a été saisi
+  // manuellement, on le conserve : la lecture sera alors testée avec timeout.
+  return override || null;
 }
 
 async function loadMetadata() {
   metadataByTable = new Map();
   try {
-    const tables = tableRows(await grist.docApi.fetchTable("_grist_Tables"));
-    const columns = tableRows(await grist.docApi.fetchTable("_grist_Tables_column"));
+    const tables = tableRows(await safeFetchTable("_grist_Tables"));
+    const columns = tableRows(await safeFetchTable("_grist_Tables_column"));
     const tableNameByMetaId = new Map(tables.map((row) => [Number(row.id), row.tableId]));
     columns.forEach((row) => {
       const tableId = tableNameByMetaId.get(Number(row.parentId));
@@ -1167,9 +1196,7 @@ async function loadAll() {
       renderSetupBanner();
       return;
     }
-    if (!allTableIds.length) {
-      try { allTableIds = await grist.docApi.listTables(); } catch (_) { allTableIds = []; }
-    }
+    if (!allTableIds.length) await refreshTableIds();
     await loadMetadata();
     const keys = Object.keys(TABLE_DEFS);
     const loaded = await Promise.all(keys.map(loadOneTable));
@@ -1196,6 +1223,8 @@ async function loadAll() {
 }
 
 function openSettings() {
+  // La configuration doit rester accessible même si un appel API est en cours.
+  document.body.classList.remove("loading");
   populateSettings();
   const diag = $("settingsDiagnostic");
   if (diag) diag.textContent = tableDiagnosticText();
@@ -1265,7 +1294,11 @@ async function saveSettings() {
     if (value) tableIds[key] = value;
   });
   try {
-    await grist.setOption("tableIds", tableIds);
+    if (grist.widgetApi?.setOption) {
+      await grist.widgetApi.setOption("tableIds", tableIds);
+    } else {
+      await grist.setOption("tableIds", tableIds);
+    }
     widgetOptions.tableIds = tableIds;
     setupAutoOpened = false;
     showToast("Configuration enregistrée");
@@ -1277,6 +1310,7 @@ async function saveSettings() {
 }
 
 async function autoDetectSettings() {
+  await refreshTableIds();
   const detected = {};
   for (const [key, def] of Object.entries(TABLE_DEFS)) {
     const tableId = await findTableId(def, null);
@@ -1347,7 +1381,21 @@ function bindEvents() {
 
 bindEvents();
 initialLoadStarted = true;
-setTimeout(loadAll, optionsReceived ? 0 : 250);
+
+async function bootstrap() {
+  // onOptions reste la source principale. getOptions permet toutefois de
+  // récupérer la configuration sur les instances qui envoient l'événement tard.
+  try {
+    if (!optionsReceived && grist.widgetApi?.getOptions) {
+      widgetOptions = (await withTimeout(grist.widgetApi.getOptions(), "Lecture des options du widget", 3000)) || {};
+    }
+  } catch (error) {
+    console.warn("Options du widget indisponibles au démarrage.", error);
+  }
+  await loadAll();
+}
+
+setTimeout(bootstrap, optionsReceived ? 0 : 250);
 setInterval(() => {
   if (!$("drawer").classList.contains("is-open") && $("settingsModal").classList.contains("hidden")) loadAll();
 }, 60000);

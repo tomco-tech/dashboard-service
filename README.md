@@ -26,3 +26,11 @@ Les alias affichés dans Grist peuvent contenir des espaces ou `&`, tandis que l
 ## Sécurité
 
 Le widget nécessite **Full document access**, car il lit plusieurs tables et peut modifier les lignes sources. Il n’effectue aucun appel réseau vers un service tiers autre que le chargement de l’API officielle Grist.
+
+
+## Correctif V1.2
+
+- La configuration reste cliquable pendant le chargement.
+- Les appels multi-tables sont limités par un délai d’attente afin d’éviter un écran bloqué sur « Chargement… ».
+- La détection commence par `listTables()` au lieu de tester successivement des noms de tables inexistants.
+- Récupération de secours des options via `widgetApi.getOptions()`.

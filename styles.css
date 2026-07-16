@@ -365,7 +365,13 @@ input:focus, select:focus, textarea:focus { border-color: var(--blue); box-shado
 .settings-footer { padding: 13px 18px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; gap: 9px; }
 
 .toast { position: fixed; right: 16px; bottom: 16px; z-index: 150; max-width: min(430px, calc(100vw - 32px)); padding: 11px 14px; border-radius: 11px; background: #162033; color: #fff; box-shadow: var(--shadow); font-weight: 700; }
-.loading { opacity: .68; pointer-events: none; }
+body.loading { cursor: progress; }
+body.loading .service-profile,
+body.loading .kpi-bar,
+body.loading .dashboard-grid { opacity: .58; }
+body.loading .topbar,
+body.loading .setup-banner,
+body.loading .control-panel { opacity: 1; pointer-events: auto; }
 .hidden { display: none !important; }
 
 @media (max-width: 1180px) {
