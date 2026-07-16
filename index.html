@@ -21,6 +21,15 @@
       </div>
     </header>
 
+    <section id="setupBanner" class="setup-banner hidden" role="alert">
+      <div class="setup-banner__content">
+        <strong id="setupTitle">Configuration nécessaire</strong>
+        <span id="setupText"></span>
+        <small id="setupDetail"></small>
+      </div>
+      <button id="setupConfigBtn" class="btn btn--primary" type="button">Configurer les tables</button>
+    </section>
+
     <section class="control-panel" aria-label="Filtres du dashboard">
       <div class="service-picker" id="servicePicker">
         <label for="serviceSearch">Service utilisateur</label>
@@ -136,6 +145,7 @@
       <button id="closeSettingsBtn" class="icon-btn" type="button">×</button>
     </div>
     <div id="settingsFields" class="settings-fields"></div>
+    <pre id="settingsDiagnostic" class="settings-diagnostic-box"></pre>
     <div class="settings-footer">
       <button id="autoDetectBtn" class="btn btn--ghost" type="button">Détecter automatiquement</button>
       <button id="saveSettingsBtn" class="btn btn--primary" type="button">Enregistrer la configuration</button>

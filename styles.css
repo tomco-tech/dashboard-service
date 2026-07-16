@@ -388,3 +388,22 @@ input:focus, select:focus, textarea:focus { border-color: var(--blue); box-shado
   .form-grid { grid-template-columns: 1fr; }
   .form-field--full { grid-column: auto; }
 }
+
+
+.setup-banner {
+  display: flex; align-items: center; justify-content: space-between; gap: 18px;
+  margin: 0 0 14px; padding: 14px 16px; border: 1px solid #f4c37d;
+  border-left: 5px solid #dc6803; border-radius: 14px; background: #fff8eb; color: #7a2e0e;
+}
+.setup-banner.hidden { display: none; }
+.setup-banner__content { display: grid; gap: 4px; min-width: 0; }
+.setup-banner__content strong { font-size: 14px; }
+.setup-banner__content span { color: #7a4b16; font-size: 13px; line-height: 1.4; }
+.setup-banner__content small { color: #9a5b13; overflow-wrap: anywhere; }
+.settings-diagnostic { margin-top: 4px; color: #667085; font-size: 11px; }
+.settings-diagnostic-box {
+  margin: 12px 0 0; padding: 12px; border: 1px solid #d0d5dd; border-radius: 10px;
+  background: #f8fafc; color: #344054; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  white-space: pre-wrap; max-height: 180px; overflow: auto;
+}
+@media (max-width: 800px) { .setup-banner { align-items: stretch; flex-direction: column; } }

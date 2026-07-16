@@ -29,8 +29,8 @@ const TABLE_DEFS = {
   },
   rtu: {
     label: "A_Suivi RTU",
-    candidates: ["A_Suivi_RTU", "A_SuiviRTU", "A_Suivi_RTU1"],
-    fuzzy: ["a", "suivi", "rtu"],
+    candidates: ["A_Suivi_RTU", "A_SuiviRTU", "A_Suivi_RTU1", "SUIVI_RTU", "Suivi_RTU", "A_RTU"],
+    fuzzy: ["suivi", "rtu"],
     sourceLabel: "RTU",
     sourceClass: "rtu",
     fields: {
@@ -51,8 +51,8 @@ const TABLE_DEFS = {
   },
   infra: {
     label: "B_Infra & Flux",
-    candidates: ["B_Infra_Flux", "B_Infra__Flux", "B_Infra_et_Flux", "B_InfraFlux"],
-    fuzzy: ["b", "infra", "flux"],
+    candidates: ["B_Infra_Flux", "B_Infra__Flux", "B_Infra_et_Flux", "B_InfraFlux", "SUIVI_Infra_Flux", "SUIVI_Chantiers_infrastructure", "SUIVI_Ouverture_de_flux"],
+    fuzzy: ["infra", "flux"],
     sourceLabel: "Infra & Flux",
     sourceClass: "infra",
     fields: {
@@ -71,8 +71,8 @@ const TABLE_DEFS = {
   },
   emm: {
     label: "B_EMM",
-    candidates: ["B_EMM", "B_EMM1"],
-    fuzzy: ["b", "emm"],
+    candidates: ["B_EMM", "B_EMM1", "SUIVI_Integration_parametrage_EMM", "SUIVI_Integration_parametrage_EMM1", "SUIVI_Intégration_paramétrage_EMM"],
+    fuzzy: ["emm"],
     sourceLabel: "EMM",
     sourceClass: "emm",
     fields: {
@@ -96,8 +96,8 @@ const TABLE_DEFS = {
   },
   conception: {
     label: "B_Chantiers_de_conception",
-    candidates: ["B_Chantiers_de_conception", "B_Chantiers_conception", "B_Chantiers_de_Conception"],
-    fuzzy: ["b", "chantiers", "conception"],
+    candidates: ["B_Chantiers_de_conception", "B_Chantiers_conception", "B_Chantiers_de_Conception", "SUIVI_Chantiers_de_conception", "SUIVI_Chantiers_conception"],
+    fuzzy: ["chantiers", "conception"],
     sourceLabel: "Chantier de conception",
     sourceClass: "conception",
     fields: {
@@ -231,6 +231,9 @@ let loadSequence = 0;
 let initialLoadStarted = false;
 let optionsReceived = false;
 let serviceComboIndex = -1;
+let currentAccessLevel = "unknown";
+let setupAutoOpened = false;
+let lastGlobalError = "";
 
 const filters = { search: "", status: "", priority: "", hideClosed: false };
 
@@ -239,9 +242,10 @@ grist.ready({
   onEditOptions: () => openSettings()
 });
 
-grist.onOptions((options) => {
+grist.onOptions((options, interaction) => {
   optionsReceived = true;
   widgetOptions = options || {};
+  currentAccessLevel = interaction?.access_level || interaction?.accessLevel || "unknown";
   if (initialLoadStarted) loadAll();
 });
 
@@ -1103,10 +1107,66 @@ function showToast(message) {
   showToast.timer = setTimeout(() => toast.classList.add("hidden"), 3200);
 }
 
+function requiredTablesMissing() {
+  return ["services", "rtu", "infra", "emm", "conception"]
+    .filter((key) => runtimeTables[key]?.missing || !runtimeTables[key]?.tableId);
+}
+
+function renderSetupBanner() {
+  const banner = $("setupBanner");
+  const title = $("setupTitle");
+  const text = $("setupText");
+  const detail = $("setupDetail");
+  if (!banner) return;
+
+  const missing = requiredTablesMissing();
+  const accessIsInsufficient = currentAccessLevel !== "unknown" && currentAccessLevel !== "full";
+  if (!accessIsInsufficient && !missing.length && !lastGlobalError) {
+    banner.classList.add("hidden");
+    return;
+  }
+
+  banner.classList.remove("hidden");
+  if (accessIsInsufficient) {
+    title.textContent = "Accès complet au document requis";
+    text.textContent = "Ce dashboard consolide plusieurs tables. Dans le panneau de création Grist, choisissez « Full document access / Accès complet au document », puis rechargez le widget.";
+    detail.textContent = `Niveau d’accès actuel : ${currentAccessLevel || "non détecté"}`;
+  } else if (lastGlobalError) {
+    title.textContent = "Impossible de charger les données Grist";
+    text.textContent = "Le widget est bien affiché, mais l’API Grist a retourné une erreur. Vérifiez l’accès complet, puis ouvrez la configuration des tables.";
+    detail.textContent = lastGlobalError;
+  } else {
+    title.textContent = "Configuration des tables nécessaire";
+    text.textContent = "Le mapping natif Grist n’apparaît pas pour ce widget multi-tables : c’est normal. Utilisez le bouton « Configurer les tables » ci-dessous pour associer chaque source à son identifiant technique.";
+    detail.textContent = `Tables à configurer : ${missing.map((key) => TABLE_DEFS[key].label).join(", ")}`;
+  }
+}
+
+function tableDiagnosticText() {
+  return Object.entries(TABLE_DEFS).map(([key, def]) => {
+    const table = runtimeTables[key];
+    if (!table) return `${def.label} : non chargée`;
+    if (table.error) return `${def.label} : ${table.error}`;
+    if (!table.tableId) return `${def.label} : introuvable`;
+    const matched = Object.entries(table.columns || {}).filter(([, colId]) => Boolean(colId)).length;
+    const total = Object.keys(def.fields || {}).length;
+    return `${def.label} : ${table.tableId} (${table.rows.length} ligne(s), ${matched}/${total} colonnes reconnues)`;
+  }).join("\n");
+}
+
 async function loadAll() {
   const sequence = ++loadSequence;
   document.body.classList.add("loading");
+  lastGlobalError = "";
   try {
+    if (currentAccessLevel !== "unknown" && currentAccessLevel !== "full") {
+      runtimeTables = {};
+      services = [];
+      actors = [];
+      renderDashboard();
+      renderSetupBanner();
+      return;
+    }
     if (!allTableIds.length) {
       try { allTableIds = await grist.docApi.listTables(); } catch (_) { allTableIds = []; }
     }
@@ -1119,8 +1179,16 @@ async function loadAll() {
     if (selectedService && !serviceById.has(selectedService.id)) selectedService = null;
     $("lastRefresh").textContent = `Actualisé à ${new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`;
     renderDashboard();
+    renderSetupBanner();
+    const missing = requiredTablesMissing();
+    if (missing.length && !setupAutoOpened) {
+      setupAutoOpened = true;
+      setTimeout(openSettings, 150);
+    }
   } catch (error) {
     console.error(error);
+    lastGlobalError = error.message || String(error);
+    renderSetupBanner();
     showToast(error.message || "Erreur de chargement du dashboard");
   } finally {
     document.body.classList.remove("loading");
@@ -1129,6 +1197,8 @@ async function loadAll() {
 
 function openSettings() {
   populateSettings();
+  const diag = $("settingsDiagnostic");
+  if (diag) diag.textContent = tableDiagnosticText();
   $("settingsBackdrop").classList.remove("hidden");
   $("settingsModal").classList.remove("hidden");
   $("settingsModal").setAttribute("aria-hidden", "false");
@@ -1147,22 +1217,43 @@ function populateSettings() {
     const wrapper = makeEl("div", "settings-field");
     const label = document.createElement("label");
     label.textContent = def.label;
-    const select = document.createElement("select");
-    select.id = `setting_${key}`;
-    const blank = document.createElement("option");
-    blank.value = "";
-    blank.textContent = "Détection automatique";
-    select.appendChild(blank);
-    allTableIds.filter((id) => !id.startsWith("_grist_")).forEach((id) => {
-      const option = document.createElement("option");
-      option.value = id;
-      option.textContent = id;
-      select.appendChild(option);
-    });
     const current = widgetOptions.tableIds?.[key] || runtimeTables[key]?.tableId || "";
-    select.value = current;
+    let control;
+    if (allTableIds.length) {
+      const select = document.createElement("select");
+      select.id = `setting_${key}`;
+      const blank = document.createElement("option");
+      blank.value = "";
+      blank.textContent = "Détection automatique";
+      select.appendChild(blank);
+      allTableIds.filter((id) => !id.startsWith("_grist_")).forEach((id) => {
+        const option = document.createElement("option");
+        option.value = id;
+        option.textContent = id;
+        select.appendChild(option);
+      });
+      if (current && ![...select.options].some((option) => option.value === current)) {
+        const option = document.createElement("option");
+        option.value = current;
+        option.textContent = current;
+        select.appendChild(option);
+      }
+      select.value = current;
+      control = select;
+    } else {
+      const input = document.createElement("input");
+      input.id = `setting_${key}`;
+      input.type = "text";
+      input.placeholder = "Identifiant technique de la table";
+      input.value = current;
+      control = input;
+    }
+    const diagnostic = makeEl("div", "settings-diagnostic");
+    const table = runtimeTables[key];
+    diagnostic.textContent = table?.error || (table?.tableId ? `${table.rows.length} ligne(s) détectée(s)` : "Non détectée");
     wrapper.appendChild(label);
-    wrapper.appendChild(select);
+    wrapper.appendChild(control);
+    wrapper.appendChild(diagnostic);
     container.appendChild(wrapper);
   });
 }
@@ -1176,6 +1267,7 @@ async function saveSettings() {
   try {
     await grist.setOption("tableIds", tableIds);
     widgetOptions.tableIds = tableIds;
+    setupAutoOpened = false;
     showToast("Configuration enregistrée");
     closeSettings();
     await loadAll();
@@ -1200,6 +1292,7 @@ async function autoDetectSettings() {
 function bindEvents() {
   $("refreshBtn").addEventListener("click", loadAll);
   $("settingsBtn").addEventListener("click", openSettings);
+  $("setupConfigBtn").addEventListener("click", openSettings);
   $("closeSettingsBtn").addEventListener("click", closeSettings);
   $("settingsBackdrop").addEventListener("click", closeSettings);
   $("saveSettingsBtn").addEventListener("click", saveSettings);
