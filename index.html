@@ -783,7 +783,7 @@ body.loading .source-list, body.loading .kpi-bar, body.loading .service-profile 
 
 
 
-/* V1.10 — sections verticales et filtres EMM à sélection multiple */
+/* V1.11 — boutons EMM compacts sans sous-filtres de statut */
 .dashboard-grid {
   grid-template-columns: minmax(0, 1fr) !important;
   gap: 12px;
@@ -812,109 +812,127 @@ body.loading .source-list, body.loading .kpi-bar, body.loading .service-profile 
   padding: 0;
 }
 .emm-filter-toolbar {
-  padding: 11px;
+  padding: 10px 11px 9px;
   border-bottom: 1px solid var(--line);
   background: #fafbfc;
 }
-.emm-filter-toolbar__top {
+
+/* Les catégories EMM sont de vrais boutons compacts, sur une seule ligne. */
+.emm-filter-grid {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding: 1px 1px 4px;
+  scrollbar-width: thin;
+  scrollbar-color: #c8d0dc transparent;
+}
+.emm-filter-grid::-webkit-scrollbar { height: 5px; }
+.emm-filter-grid::-webkit-scrollbar-track { background: transparent; }
+.emm-filter-grid::-webkit-scrollbar-thumb { background: #c8d0dc; border-radius: 999px; }
+
+.emm-filter-item {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.emm-filter-main {
+  width: auto;
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid #cbd3df;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #344054;
+  padding: 5px 9px;
+  text-align: center;
+  white-space: nowrap;
+  box-shadow: 0 2px 5px rgba(29, 43, 68, .055);
+  transition: background .14s ease, border-color .14s ease, color .14s ease, box-shadow .14s ease, transform .14s ease;
+}
+.emm-filter-main:hover {
+  background: #f7f8fa;
+  border-color: #aeb8c7;
+  box-shadow: 0 3px 8px rgba(29, 43, 68, .09);
+  transform: translateY(-1px);
+}
+.emm-filter-item.is-selected .emm-filter-main {
+  background: #344054;
+  border-color: #344054;
+  color: #ffffff;
+  box-shadow: 0 3px 8px rgba(29, 43, 68, .16);
+}
+.emm-filter-item.is-selected .emm-filter-main:hover {
+  background: #273244;
+  border-color: #273244;
+}
+.emm-filter-heading {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.emm-filter-label {
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 820;
+  color: inherit;
+}
+.emm-filter-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #edf0f4;
+  color: #606c80;
+  font-size: 9.5px;
+  line-height: 1;
+  font-weight: 850;
+}
+.emm-filter-item.is-selected .emm-filter-count {
+  background: rgba(255, 255, 255, .18);
+  color: #ffffff;
+}
+
+/* Plus de sous-boutons ni de synthèses par statut dans les boutons. */
+.emm-filter-summary,
+.emm-filter-check,
+.emm-status-filter-row { display: none !important; }
+
+/* L'aide et la remise à zéro sont positionnées sous la ligne de boutons. */
+.emm-filter-footer {
+  min-height: 28px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 9px;
+  gap: 10px;
+  margin-top: 5px;
+  padding-top: 7px;
+  border-top: 1px solid #e8ecf2;
 }
 .emm-filter-toolbar__hint {
   color: #69758a;
-  font-size: 11.5px;
-  font-weight: 700;
+  font-size: 10.5px;
+  font-weight: 680;
 }
 .emm-clear-filters {
-  border: 1px solid var(--line-strong);
+  border: 1px solid #d2d9e3;
   border-radius: 8px;
   background: #fff;
   color: #475467;
-  padding: 6px 9px;
-  font-size: 10.5px;
+  padding: 5px 8px;
+  font-size: 10px;
+  line-height: 1;
   font-weight: 800;
 }
 .emm-clear-filters:hover:not(:disabled) { background: #f2f4f7; border-color: #aeb9ca; }
-.emm-clear-filters:disabled { opacity: .45; cursor: default; }
-.emm-filter-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  gap: 8px;
-}
-.emm-filter-item {
-  min-width: 0;
-  border: 1px solid var(--line);
-  border-radius: 11px;
-  background: #fff;
-  overflow: hidden;
-}
-.emm-filter-item.is-selected {
-  border-color: #9ca7b8;
-  box-shadow: inset 0 0 0 1px #9ca7b8;
-}
-.emm-filter-main {
-  width: 100%;
-  border: 0;
-  background: #fff;
-  color: inherit;
-  padding: 9px 10px;
-  text-align: left;
-}
-.emm-filter-main:hover { background: #f7f8fa; }
-.emm-filter-item.is-selected .emm-filter-main { background: #f4f5f7; }
-.emm-filter-heading {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 8px;
-}
-.emm-filter-label { font-size: 12.5px; font-weight: 850; color: #2d3748; }
-.emm-filter-count { margin-top: 2px; color: #7a8497; font-size: 10px; font-weight: 650; }
-.emm-filter-check {
-  display: inline-grid;
-  place-items: center;
-  width: 21px;
-  height: 21px;
-  border-radius: 7px;
-  background: #edf0f4;
-  color: #536078;
-  font-size: 12px;
-  font-weight: 900;
-  flex: 0 0 auto;
-}
-.emm-filter-summary {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 7px;
-}
-.emm-status-filter-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  padding: 8px 9px 9px;
-  border-top: 1px solid #e7ebf0;
-  background: #fafbfc;
-}
-.emm-status-filter {
-  border: 1px solid #d6dce5;
-  border-radius: 999px;
-  background: #fff;
-  color: #566276;
-  padding: 5px 8px;
-  font-size: 10px;
-  font-weight: 800;
-}
-.emm-status-filter:hover { border-color: #aeb8c7; background: #f3f5f8; }
-.emm-status-filter.is-selected {
-  border-color: #677386;
-  background: #677386;
-  color: #fff;
-}
-.emm-status-filter-empty { color: #8b95a6; font-size: 10.5px; font-style: italic; }
+.emm-clear-filters:disabled { opacity: .42; cursor: default; }
+
 .emm-subject-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
@@ -926,8 +944,8 @@ body.loading .source-list, body.loading .kpi-bar, body.loading .service-profile 
 .emm-subject-grid > .empty-state { grid-column: 1 / -1; }
 
 @media (max-width: 720px) {
-  .emm-filter-toolbar__top { align-items: flex-start; flex-direction: column; }
-  .emm-filter-grid, .emm-subject-grid { grid-template-columns: 1fr; }
+  .emm-filter-footer { align-items: flex-start; flex-direction: column; }
+  .emm-subject-grid { grid-template-columns: 1fr; }
 }
 </style>
   <script src="https://docs.getgrist.com/grist-plugin-api.js" onerror="document.getElementById('lastRefresh').textContent='Erreur : API Grist non chargée'"></script>
@@ -1387,7 +1405,7 @@ const filters = {
   hideClosed: false
 };
 
-const WIDGET_VERSION = "1.10.0";
+const WIDGET_VERSION = "1.11.0";
 const API_TIMEOUT_MS = 6000;
 window.__GRIST_SERVICE_DASHBOARD_VERSION__ = WIDGET_VERSION;
 
@@ -2288,41 +2306,12 @@ function renderEmmCategoryFilter(definition, subjects, scopedSubjects) {
   mainButton.setAttribute("aria-pressed", String(isSelected));
   mainButton.title = isSelected ? "Retirer ce filtre" : "Filtrer sur cette catégorie";
 
-  const heading = makeEl("div", "emm-filter-heading");
-  const labelWrap = makeEl("div");
-  labelWrap.appendChild(makeEl("div", "emm-filter-label", definition.label));
-  labelWrap.appendChild(makeEl("div", "emm-filter-count", `${subjects.length} sujet(s)`));
-  heading.appendChild(labelWrap);
-  heading.appendChild(makeEl("span", "emm-filter-check", isSelected ? "✓" : "+"));
+  const heading = makeEl("span", "emm-filter-heading");
+  heading.appendChild(makeEl("span", "emm-filter-label", definition.label));
+  heading.appendChild(makeEl("span", "emm-filter-count", String(subjects.length)));
   mainButton.appendChild(heading);
-
-  const summary = makeEl("div", "emm-filter-summary");
-  renderEmmFilterSummary(summary, subjects, scopedSubjects);
-  mainButton.appendChild(summary);
   mainButton.addEventListener("click", () => toggleEmmCategory(definition.key));
   item.appendChild(mainButton);
-
-  if (isSelected) {
-    const statusRow = makeEl("div", "emm-status-filter-row");
-    const entries = statusCountEntries(subjects);
-    if (!entries.length) {
-      statusRow.appendChild(makeEl("span", "emm-status-filter-empty", "Aucun statut disponible"));
-    } else {
-      const selectedStatuses = selectedStatusesForEmmCategory(definition.key);
-      entries.forEach(([status, count]) => {
-        const active = selectedStatuses.has(status);
-        const button = makeEl("button", `emm-status-filter ${active ? "is-selected" : ""}`.trim(), `${status} · ${count}`);
-        button.type = "button";
-        button.setAttribute("aria-pressed", String(active));
-        button.addEventListener("click", (event) => {
-          event.stopPropagation();
-          toggleEmmStatus(definition.key, status);
-        });
-        statusRow.appendChild(button);
-      });
-    }
-    item.appendChild(statusRow);
-  }
 
   return item;
 }
@@ -2347,14 +2336,6 @@ function renderEmmList(subjects) {
   const definitions = emmCategoryDefinitions(subjects, scopedSubjects);
 
   const toolbar = makeEl("div", "emm-filter-toolbar");
-  const toolbarTop = makeEl("div", "emm-filter-toolbar__top");
-  toolbarTop.appendChild(makeEl("div", "emm-filter-toolbar__hint", emmFilterState.categories.size ? `${emmFilterState.categories.size} catégorie(s) sélectionnée(s)` : "Aucun filtre : tous les sujets sont affichés"));
-  const resetButton = makeEl("button", "emm-clear-filters", "Désélectionner tout");
-  resetButton.type = "button";
-  resetButton.disabled = !emmFilterState.categories.size;
-  resetButton.addEventListener("click", clearEmmFilters);
-  toolbarTop.appendChild(resetButton);
-  toolbar.appendChild(toolbarTop);
 
   const filterGrid = makeEl("div", "emm-filter-grid");
   definitions.forEach((definition) => {
@@ -2363,6 +2344,16 @@ function renderEmmList(subjects) {
     filterGrid.appendChild(renderEmmCategoryFilter(definition, categorySubjects, scopedCategorySubjects));
   });
   toolbar.appendChild(filterGrid);
+
+  const footer = makeEl("div", "emm-filter-footer");
+  footer.appendChild(makeEl("div", "emm-filter-toolbar__hint", emmFilterState.categories.size ? `${emmFilterState.categories.size} catégorie(s) sélectionnée(s)` : "Aucun filtre : tous les sujets sont affichés"));
+  const resetButton = makeEl("button", "emm-clear-filters", "Désélectionner tout");
+  resetButton.type = "button";
+  resetButton.disabled = !emmFilterState.categories.size;
+  resetButton.addEventListener("click", clearEmmFilters);
+  footer.appendChild(resetButton);
+  toolbar.appendChild(footer);
+
   list.appendChild(toolbar);
 
   const displayedSubjects = filterEmmSubjects(subjects);
