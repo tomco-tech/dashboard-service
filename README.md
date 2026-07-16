@@ -1,20 +1,18 @@
-# Dashboard Service Utilisateur — mise en page adaptative des sections
+# Dashboard Service Utilisateur — version 1.10
 
-Cette version améliore la mise en page des quatre sections :
+Widget Grist multi-tables consolidant les RTU, sujets Réseau / Raccordement / Flux, EMM et chantiers de conception d'un ou plusieurs services utilisateurs.
 
-- toutes les sections fermées ont la même largeur compacte ;
-- une section ouverte s’étend automatiquement sur toute la largeur du dashboard ;
-- les cartes de Réseau, Raccordement et Flux et des Chantiers de Conception utilisent la même grille que les cartes RTU ;
-- les sous-sections EMM sont présentées trois par ligne sur les grands écrans, avec un espacement régulier ;
-- les cartes EMM sont harmonisées à l’intérieur de chaque sous-section ;
-- les titres de sections sont agrandis tout en restant en capitales et en gris.
+## Évolutions de cette version
 
-Le comportement particulier du RTU pour un service sélectionné est conservé : le panneau affiche directement le détail du RTU et reste ouvert.
+- Les quatre sections sont toujours disposées verticalement, ouvertes ou fermées.
+- Les titres de sections sont légèrement plus compacts.
+- La section EMM n'utilise plus de sous-sections repliables.
+- Les catégories EMM sont désormais des filtres à sélection multiple.
+- La sélection d'une catégorie révèle des filtres complémentaires par statut.
+- Plusieurs catégories et plusieurs statuts peuvent être combinés.
+- Sans catégorie sélectionnée, tous les sujets EMM sont affichés.
+- Le bouton « Désélectionner tout » remet la section EMM dans son état global.
 
-## Publication
+## Installation
 
-Déposer `index.html` et `.nojekyll` à la racine du dépôt GitHub Pages.
-
-Pour forcer le rafraîchissement dans Grist, utiliser temporairement un paramètre d’URL, par exemple :
-
-`?v=1.9`
+Publier `index.html` sur GitHub Pages avec `.nojekyll`, puis utiliser l'URL comme Custom Widget Grist avec **Full document access**.

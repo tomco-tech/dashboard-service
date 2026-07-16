@@ -781,6 +781,154 @@ body.loading .source-list, body.loading .kpi-bar, body.loading .service-profile 
   }
 }
 
+
+
+/* V1.10 — sections verticales et filtres EMM à sélection multiple */
+.dashboard-grid {
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 12px;
+}
+.source-panel,
+.source-panel--rtu,
+.source-panel--infra,
+.source-panel--emm,
+.source-panel--conception,
+.source-panel.is-collapsed,
+.source-panel:not(.is-collapsed) {
+  grid-column: 1 / -1 !important;
+  width: 100%;
+}
+.source-header h2 {
+  font-size: 13px;
+  line-height: 1.22;
+  letter-spacing: .05em;
+}
+
+/* L'ancienne présentation en sous-sections est remplacée par des filtres EMM. */
+.emm-category-grid,
+.emm-category-group { display: none !important; }
+.source-panel--emm .source-list {
+  max-height: none;
+  padding: 0;
+}
+.emm-filter-toolbar {
+  padding: 11px;
+  border-bottom: 1px solid var(--line);
+  background: #fafbfc;
+}
+.emm-filter-toolbar__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 9px;
+}
+.emm-filter-toolbar__hint {
+  color: #69758a;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+.emm-clear-filters {
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: #fff;
+  color: #475467;
+  padding: 6px 9px;
+  font-size: 10.5px;
+  font-weight: 800;
+}
+.emm-clear-filters:hover:not(:disabled) { background: #f2f4f7; border-color: #aeb9ca; }
+.emm-clear-filters:disabled { opacity: .45; cursor: default; }
+.emm-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 8px;
+}
+.emm-filter-item {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: #fff;
+  overflow: hidden;
+}
+.emm-filter-item.is-selected {
+  border-color: #9ca7b8;
+  box-shadow: inset 0 0 0 1px #9ca7b8;
+}
+.emm-filter-main {
+  width: 100%;
+  border: 0;
+  background: #fff;
+  color: inherit;
+  padding: 9px 10px;
+  text-align: left;
+}
+.emm-filter-main:hover { background: #f7f8fa; }
+.emm-filter-item.is-selected .emm-filter-main { background: #f4f5f7; }
+.emm-filter-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.emm-filter-label { font-size: 12.5px; font-weight: 850; color: #2d3748; }
+.emm-filter-count { margin-top: 2px; color: #7a8497; font-size: 10px; font-weight: 650; }
+.emm-filter-check {
+  display: inline-grid;
+  place-items: center;
+  width: 21px;
+  height: 21px;
+  border-radius: 7px;
+  background: #edf0f4;
+  color: #536078;
+  font-size: 12px;
+  font-weight: 900;
+  flex: 0 0 auto;
+}
+.emm-filter-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 7px;
+}
+.emm-status-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 8px 9px 9px;
+  border-top: 1px solid #e7ebf0;
+  background: #fafbfc;
+}
+.emm-status-filter {
+  border: 1px solid #d6dce5;
+  border-radius: 999px;
+  background: #fff;
+  color: #566276;
+  padding: 5px 8px;
+  font-size: 10px;
+  font-weight: 800;
+}
+.emm-status-filter:hover { border-color: #aeb8c7; background: #f3f5f8; }
+.emm-status-filter.is-selected {
+  border-color: #677386;
+  background: #677386;
+  color: #fff;
+}
+.emm-status-filter-empty { color: #8b95a6; font-size: 10.5px; font-style: italic; }
+.emm-subject-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+  gap: 10px;
+  padding: 10px;
+  align-items: stretch;
+}
+.emm-subject-grid > .subject-card { height: 100%; margin-bottom: 0; }
+.emm-subject-grid > .empty-state { grid-column: 1 / -1; }
+
+@media (max-width: 720px) {
+  .emm-filter-toolbar__top { align-items: flex-start; flex-direction: column; }
+  .emm-filter-grid, .emm-subject-grid { grid-template-columns: 1fr; }
+}
 </style>
   <script src="https://docs.getgrist.com/grist-plugin-api.js" onerror="document.getElementById('lastRefresh').textContent='Erreur : API Grist non chargée'"></script>
 </head>
@@ -1223,10 +1371,10 @@ const sourceCollapseState = Object.assign(
   { rtu: true, infra: true, emm: true, conception: true },
   readStoredState("grist_service_dashboard_collapsed_sources_v16")
 );
-const emmCategoryCollapseState = Object.assign(
-  { kiosque: true, politique_verrouillage: true, wifi: true, messagerie: true, push_webapp: true, proxy_vip: true, autres: true },
-  readStoredState("grist_service_dashboard_collapsed_emm_categories_v16")
-);
+const emmFilterState = {
+  categories: new Set(),
+  statuses: new Map()
+};
 
 const filters = {
   community: "",
@@ -1239,7 +1387,7 @@ const filters = {
   hideClosed: false
 };
 
-const WIDGET_VERSION = "1.9.0";
+const WIDGET_VERSION = "1.10.0";
 const API_TIMEOUT_MS = 6000;
 window.__GRIST_SERVICE_DASHBOARD_VERSION__ = WIDGET_VERSION;
 
@@ -2066,82 +2214,166 @@ function singleServiceEmmSummary(subjects, scopedSubjects) {
   return null;
 }
 
-function renderEmmCategoryGroup(def, subjects, scopedSubjects = subjects) {
-  const collapsed = Boolean(emmCategoryCollapseState[def.key]);
-  const classes = [
-    "emm-category-group",
-    `emm-category-group--${def.key}`,
-    subjects.length ? "" : "emm-category-group--empty",
-    collapsed ? "is-collapsed" : ""
-  ].filter(Boolean).join(" ");
-  const group = makeEl("section", classes);
-  const header = makeEl("button", "emm-category-header");
-  header.type = "button";
-  header.setAttribute("aria-expanded", String(!collapsed));
-  header.title = collapsed ? "Développer la catégorie" : "Réduire la catégorie";
+function emmCategoryDefinitions(subjects, scopedSubjects) {
+  const definitions = [...EMM_CATEGORY_DEFS];
+  const hasOthers = [...subjects, ...scopedSubjects].some((subject) => normalizeEmmCategory(subject.category) === "autres");
+  if (hasOthers) definitions.push({ key: "autres", label: "Autres" });
+  return definitions;
+}
 
-  const titleWrap = makeEl("div");
-  titleWrap.appendChild(makeEl("div", "emm-category-title", def.label));
-  titleWrap.appendChild(makeEl("div", "emm-category-subtitle", `${subjects.length} sujet(s)`));
-  header.appendChild(titleWrap);
-
-  const right = makeEl("div", "emm-category-header__right");
-  const summary = makeEl("div", "emm-status-summary");
-  if (selectedService) {
-    const single = singleServiceEmmSummary(subjects, scopedSubjects);
-    if (single) addBadge(summary, single.label, single.className);
-    else statusCountEntries(subjects).forEach(([status, count]) => addBadge(summary, `${status} · ${count}`, statusBadgeClass(status)));
-  } else {
-    if (!subjects.length) addBadge(summary, "0", "badge--na");
-    else statusCountEntries(subjects).forEach(([status, count]) => addBadge(summary, `${status} · ${count}`, statusBadgeClass(status)));
+function selectedStatusesForEmmCategory(categoryKey) {
+  if (!emmFilterState.statuses.has(categoryKey)) {
+    emmFilterState.statuses.set(categoryKey, new Set());
   }
-  right.appendChild(summary);
-  right.appendChild(makeEl("span", "emm-category-chevron", "⌄"));
-  header.appendChild(right);
-  group.appendChild(header);
+  return emmFilterState.statuses.get(categoryKey);
+}
 
-  const body = makeEl("div", "emm-category-body");
-  if (!subjects.length) {
-    body.appendChild(makeEl("div", "emm-category-empty", selectedService && scopedSubjects.length ? "Des sujets existent pour cette catégorie, mais ils sont masqués par les filtres actifs." : selectedService ? "Aucun besoin identifié pour ce service." : "Aucun sujet pour les filtres sélectionnés."));
+function clearEmmFilters() {
+  emmFilterState.categories.clear();
+  emmFilterState.statuses.clear();
+  rerenderEmmOnly();
+}
+
+function toggleEmmCategory(categoryKey) {
+  if (emmFilterState.categories.has(categoryKey)) {
+    emmFilterState.categories.delete(categoryKey);
+    emmFilterState.statuses.delete(categoryKey);
   } else {
-    subjects.forEach((subject) => body.appendChild(renderWorkCard(subject)));
+    emmFilterState.categories.add(categoryKey);
   }
-  group.appendChild(body);
+  rerenderEmmOnly();
+}
 
-  header.addEventListener("click", () => {
-    emmCategoryCollapseState[def.key] = !group.classList.contains("is-collapsed");
-    const nowCollapsed = Boolean(emmCategoryCollapseState[def.key]);
-    group.classList.toggle("is-collapsed", nowCollapsed);
-    header.setAttribute("aria-expanded", String(!nowCollapsed));
-    header.title = nowCollapsed ? "Développer la catégorie" : "Réduire la catégorie";
-    writeStoredState("grist_service_dashboard_collapsed_emm_categories_v16", emmCategoryCollapseState);
+function toggleEmmStatus(categoryKey, status) {
+  emmFilterState.categories.add(categoryKey);
+  const selected = selectedStatusesForEmmCategory(categoryKey);
+  if (selected.has(status)) selected.delete(status);
+  else selected.add(status);
+  rerenderEmmOnly();
+}
+
+function filterEmmSubjects(subjects) {
+  if (!emmFilterState.categories.size) return subjects;
+  return subjects.filter((subject) => {
+    const categoryKey = normalizeEmmCategory(subject.category);
+    if (!emmFilterState.categories.has(categoryKey)) return false;
+    const selectedStatuses = emmFilterState.statuses.get(categoryKey);
+    if (!selectedStatuses || !selectedStatuses.size) return true;
+    return selectedStatuses.has(subject.status || "Non renseigné");
   });
+}
 
-  return group;
+function renderEmmFilterSummary(container, subjects, scopedSubjects) {
+  if (selectedService) {
+    const summary = singleServiceEmmSummary(subjects, scopedSubjects);
+    if (summary) {
+      addBadge(container, summary.label, summary.className);
+      return;
+    }
+  }
+  const entries = statusCountEntries(subjects);
+  if (!entries.length) {
+    addBadge(container, selectedService ? "N.A." : "0", "badge--na");
+    return;
+  }
+  entries.forEach(([status, count]) => addBadge(container, `${status} · ${count}`, statusBadgeClass(status)));
+}
+
+function renderEmmCategoryFilter(definition, subjects, scopedSubjects) {
+  const isSelected = emmFilterState.categories.has(definition.key);
+  const item = makeEl("div", `emm-filter-item ${isSelected ? "is-selected" : ""}`.trim());
+
+  const mainButton = makeEl("button", "emm-filter-main");
+  mainButton.type = "button";
+  mainButton.setAttribute("aria-pressed", String(isSelected));
+  mainButton.title = isSelected ? "Retirer ce filtre" : "Filtrer sur cette catégorie";
+
+  const heading = makeEl("div", "emm-filter-heading");
+  const labelWrap = makeEl("div");
+  labelWrap.appendChild(makeEl("div", "emm-filter-label", definition.label));
+  labelWrap.appendChild(makeEl("div", "emm-filter-count", `${subjects.length} sujet(s)`));
+  heading.appendChild(labelWrap);
+  heading.appendChild(makeEl("span", "emm-filter-check", isSelected ? "✓" : "+"));
+  mainButton.appendChild(heading);
+
+  const summary = makeEl("div", "emm-filter-summary");
+  renderEmmFilterSummary(summary, subjects, scopedSubjects);
+  mainButton.appendChild(summary);
+  mainButton.addEventListener("click", () => toggleEmmCategory(definition.key));
+  item.appendChild(mainButton);
+
+  if (isSelected) {
+    const statusRow = makeEl("div", "emm-status-filter-row");
+    const entries = statusCountEntries(subjects);
+    if (!entries.length) {
+      statusRow.appendChild(makeEl("span", "emm-status-filter-empty", "Aucun statut disponible"));
+    } else {
+      const selectedStatuses = selectedStatusesForEmmCategory(definition.key);
+      entries.forEach(([status, count]) => {
+        const active = selectedStatuses.has(status);
+        const button = makeEl("button", `emm-status-filter ${active ? "is-selected" : ""}`.trim(), `${status} · ${count}`);
+        button.type = "button";
+        button.setAttribute("aria-pressed", String(active));
+        button.addEventListener("click", (event) => {
+          event.stopPropagation();
+          toggleEmmStatus(definition.key, status);
+        });
+        statusRow.appendChild(button);
+      });
+    }
+    item.appendChild(statusRow);
+  }
+
+  return item;
+}
+
+function rerenderEmmOnly() {
+  const subjects = activeSubjects().filter((subject) => subject.source === "emm");
+  renderEmmList(subjects);
 }
 
 function renderEmmList(subjects) {
   const list = $("emmList");
   const count = $("emmCount");
   list.replaceChildren();
-  count.textContent = String(subjects.length);
   const table = runtimeTables.emm;
   if (table?.error) {
+    count.textContent = "0";
     list.appendChild(makeEl("div", "empty-state error-state", table.error));
     return;
   }
 
   const scopedSubjects = allSubjects().filter((subject) => subject.source === "emm" && subjectMatchesServiceScope(subject));
-  const categoryGrid = makeEl("div", "emm-category-grid");
-  EMM_CATEGORY_DEFS.forEach((def) => {
-    const filtered = subjects.filter((subject) => normalizeEmmCategory(subject.category) === def.key);
-    const scoped = scopedSubjects.filter((subject) => normalizeEmmCategory(subject.category) === def.key);
-    categoryGrid.appendChild(renderEmmCategoryGroup(def, filtered, scoped));
+  const definitions = emmCategoryDefinitions(subjects, scopedSubjects);
+
+  const toolbar = makeEl("div", "emm-filter-toolbar");
+  const toolbarTop = makeEl("div", "emm-filter-toolbar__top");
+  toolbarTop.appendChild(makeEl("div", "emm-filter-toolbar__hint", emmFilterState.categories.size ? `${emmFilterState.categories.size} catégorie(s) sélectionnée(s)` : "Aucun filtre : tous les sujets sont affichés"));
+  const resetButton = makeEl("button", "emm-clear-filters", "Désélectionner tout");
+  resetButton.type = "button";
+  resetButton.disabled = !emmFilterState.categories.size;
+  resetButton.addEventListener("click", clearEmmFilters);
+  toolbarTop.appendChild(resetButton);
+  toolbar.appendChild(toolbarTop);
+
+  const filterGrid = makeEl("div", "emm-filter-grid");
+  definitions.forEach((definition) => {
+    const categorySubjects = subjects.filter((subject) => normalizeEmmCategory(subject.category) === definition.key);
+    const scopedCategorySubjects = scopedSubjects.filter((subject) => normalizeEmmCategory(subject.category) === definition.key);
+    filterGrid.appendChild(renderEmmCategoryFilter(definition, categorySubjects, scopedCategorySubjects));
   });
-  const others = subjects.filter((subject) => normalizeEmmCategory(subject.category) === "autres");
-  const scopedOthers = scopedSubjects.filter((subject) => normalizeEmmCategory(subject.category) === "autres");
-  if (others.length || scopedOthers.length) categoryGrid.appendChild(renderEmmCategoryGroup({ key: "autres", label: "Autres" }, others, scopedOthers));
-  list.appendChild(categoryGrid);
+  toolbar.appendChild(filterGrid);
+  list.appendChild(toolbar);
+
+  const displayedSubjects = filterEmmSubjects(subjects);
+  count.textContent = String(displayedSubjects.length);
+  const subjectGrid = makeEl("div", "emm-subject-grid");
+  if (!displayedSubjects.length) {
+    subjectGrid.appendChild(makeEl("div", "empty-state", "Aucun sujet ne correspond aux filtres EMM sélectionnés."));
+  } else {
+    displayedSubjects.forEach((subject) => subjectGrid.appendChild(renderWorkCard(subject)));
+  }
+  list.appendChild(subjectGrid);
 }
 
 function renderWorkCard(subject) {
@@ -2189,12 +2421,14 @@ function renderSourceList(sourceKey, subjects) {
     list.appendChild(error);
     return;
   }
-  if (!subjects.length) {
-    list.appendChild(makeEl("div", "empty-state", "Aucun élément pour les filtres sélectionnés."));
+  if (sourceKey === "emm") {
+    // Les filtres de catégorie EMM restent disponibles même si aucun sujet
+    // n'est visible avec les filtres globaux actuels.
+    renderEmmList(subjects);
     return;
   }
-  if (sourceKey === "emm") {
-    renderEmmList(subjects);
+  if (!subjects.length) {
+    list.appendChild(makeEl("div", "empty-state", "Aucun élément pour les filtres sélectionnés."));
     return;
   }
   if (sourceKey === "rtu" && selectedService) {
