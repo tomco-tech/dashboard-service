@@ -14,3 +14,8 @@ Widget Grist multi-tables consolidant les RTU, sujets Réseau / Raccordement / F
 ## Installation
 
 Publier `index.html` sur GitHub Pages avec `.nojekyll`, puis utiliser l’URL comme Custom Widget Grist avec **Full document access**.
+
+
+## V1.12 — sujets communs
+
+Un bouton **Masquer les sujets communs** a été ajouté à côté des filtres de recherche, statut et priorité. Lorsqu'il est activé, le dashboard masque les enregistrements dont la colonne **Service Utilisateur** vaut **Tous**, y compris lorsque cette valeur est stockée sous forme de texte ou de référence Grist. Le bouton reprend le design des boutons de catégorie EMM.

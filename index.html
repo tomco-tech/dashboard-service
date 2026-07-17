@@ -947,6 +947,43 @@ body.loading .source-list, body.loading .kpi-bar, body.loading .service-profile 
   .emm-filter-footer { align-items: flex-start; flex-direction: column; }
   .emm-subject-grid { grid-template-columns: 1fr; }
 }
+
+
+/* V1.12 — filtre des sujets communs */
+.filter-row--work {
+  grid-template-columns: minmax(280px, 1.6fr) minmax(170px, .65fr) minmax(155px, .6fr) auto;
+}
+.common-subject-filter {
+  align-self: center;
+  display: flex;
+  align-items: center;
+  min-width: max-content;
+}
+.common-subject-filter .common-subject-toggle {
+  min-height: 38px;
+  padding: 7px 11px;
+}
+.common-subject-filter.is-selected .emm-filter-main {
+  background: #344054;
+  border-color: #344054;
+  color: #ffffff;
+  box-shadow: 0 3px 8px rgba(29, 43, 68, .16);
+}
+.common-subject-filter.is-selected .emm-filter-main:hover {
+  background: #273244;
+  border-color: #273244;
+}
+@media (max-width: 1250px) {
+  .filter-row--work {
+    grid-template-columns: minmax(220px, 1.4fr) minmax(145px, 1fr) minmax(145px, 1fr) auto;
+  }
+}
+@media (max-width: 800px) {
+  .filter-row--work { grid-template-columns: 1fr; }
+  .common-subject-filter { min-width: 0; }
+  .common-subject-filter .common-subject-toggle { width: 100%; }
+}
+
 </style>
   <script src="https://docs.getgrist.com/grist-plugin-api.js" onerror="document.getElementById('lastRefresh').textContent='Erreur : API Grist non chargée'"></script>
 </head>
@@ -1028,6 +1065,14 @@ body.loading .source-list, body.loading .kpi-bar, body.loading .service-profile 
           <select id="priorityFilter" aria-label="Priorité">
             <option value="">Toutes les priorités</option>
           </select>
+        </div>
+
+        <div id="commonSubjectsFilter" class="emm-filter-item common-subject-filter">
+          <button id="hideCommonSubjectsBtn" class="emm-filter-main common-subject-toggle" type="button" aria-pressed="false" title="Masquer les sujets dont le Service Utilisateur vaut Tous">
+            <span class="emm-filter-heading">
+              <span class="emm-filter-label">Masquer les sujets communs</span>
+            </span>
+          </button>
         </div>
       </div>
     </section>
@@ -1402,10 +1447,11 @@ const filters = {
   search: "",
   status: "",
   priority: "",
-  hideClosed: false
+  hideClosed: false,
+  hideCommonSubjects: false
 };
 
-const WIDGET_VERSION = "1.11.0";
+const WIDGET_VERSION = "1.12.0";
 const API_TIMEOUT_MS = 6000;
 window.__GRIST_SERVICE_DASHBOARD_VERSION__ = WIDGET_VERSION;
 
@@ -1469,6 +1515,17 @@ function dashboardTitleText() {
 function renderDashboardTitle() {
   const title = $("dashboardTitle");
   if (title) title.textContent = dashboardTitleText();
+}
+
+function syncCommonSubjectsButton() {
+  const wrapper = $("commonSubjectsFilter");
+  const button = $("hideCommonSubjectsBtn");
+  if (!wrapper || !button) return;
+  wrapper.classList.toggle("is-selected", filters.hideCommonSubjects);
+  button.setAttribute("aria-pressed", String(filters.hideCommonSubjects));
+  button.title = filters.hideCommonSubjects
+    ? "Afficher les sujets dont le Service Utilisateur vaut Tous"
+    : "Masquer les sujets dont le Service Utilisateur vaut Tous";
 }
 
 // Compatibility note:
@@ -1918,6 +1975,10 @@ function serviceTokens(raw) {
   return asText(raw).split(/[,;\n|]+/).map((token) => normalizeKey(token.trim())).filter(Boolean);
 }
 
+function rawIsCommonSubject(raw) {
+  return serviceTokens(raw).some((token) => ["tous", "toutes", "all"].includes(token));
+}
+
 function rawAppliesToService(raw, service) {
   if (!service) return true;
   const tokens = serviceTokens(raw);
@@ -1948,10 +2009,11 @@ function hasServiceDimensionFilters() {
 }
 
 function hasWorkFilters() {
-  return Boolean(filters.search || filters.status || filters.priority || filters.hideClosed);
+  return Boolean(filters.search || filters.status || filters.priority || filters.hideClosed || filters.hideCommonSubjects);
 }
 
 function subjectMatchesWorkFilters(subject) {
+  if (filters.hideCommonSubjects && rawIsCommonSubject(subject.serviceRaw)) return false;
   if (filters.hideClosed && isClosedStatus(subject.status)) return false;
   if (filters.status && subject.status !== filters.status) return false;
   if (filters.priority && subject.priority !== filters.priority) return false;
@@ -2433,6 +2495,7 @@ function renderSourceList(sourceKey, subjects) {
 function renderDashboard() {
   refreshServiceDimensionFilters();
   renderDashboardTitle();
+  syncCommonSubjectsButton();
   Object.keys(sourceCollapseState).forEach(applySourceCollapseState);
   const all = allSubjects();
   const serviceScoped = all.filter(subjectMatchesServiceScope);
@@ -3026,6 +3089,10 @@ function bindEvents() {
   $("globalSearch").addEventListener("input", (event) => { filters.search = event.target.value; renderDashboard(); });
   $("statusFilter").addEventListener("change", (event) => { filters.status = event.target.value; renderDashboard(); });
   $("priorityFilter").addEventListener("change", (event) => { filters.priority = event.target.value; renderDashboard(); });
+  $("hideCommonSubjectsBtn").addEventListener("click", () => {
+    filters.hideCommonSubjects = !filters.hideCommonSubjects;
+    renderDashboard();
+  });
   $("hideClosedToggle")?.addEventListener("change", (event) => { filters.hideClosed = event.target.checked; renderDashboard(); });
 
   document.addEventListener("click", (event) => {
