@@ -1,15 +1,10 @@
-# Dashboard Service Utilisateur — version 1.13
+# Dashboard Service Utilisateur — mise à jour RTU
 
-Widget Grist multi-tables consolidant les RTU, sujets Réseau / Raccordement / Flux, EMM et chantiers de conception d’un ou plusieurs services utilisateurs.
+Cette version apporte deux ajustements d'affichage à la section RTU :
 
-## Évolutions de cette version
+- lorsqu'un seul service est sélectionné, le **Statut** est présenté dans le même format que **Version RTU** et **Date de réception** ;
+- lorsque plusieurs services sont affichés, les blocs **Version RTU** et **Date de réception** sont plus compacts (conteneurs et typographie réduits).
 
-- Pour un service utilisateur sélectionné, la section RTU ne présente plus le libellé redondant « RTU sans version ».
-- La version du RTU est affichée comme une information distincte dans le détail.
-- La date de réception du RTU est également affichée et modifiable lorsque la colonne existe dans `A_Suivi RTU`.
-- Le widget reconnaît plusieurs variantes de libellés pour ces colonnes, notamment `Version RTU`, `Versionning`, `Date de réception` et leurs variantes techniques.
-- Si plusieurs RTU existent exceptionnellement pour un même service, le plus récent selon la date de réception est affiché en priorité.
+## Publication
 
-## Installation
-
-Publier `index.html` sur GitHub Pages avec `.nojekyll`, puis utiliser l’URL comme Custom Widget Grist avec **Full document access**.
+Déposer `index.html`, `README.md` et `.nojekyll` à la racine du dépôt GitHub Pages, puis forcer le cache dans Grist avec un paramètre d'URL, par exemple `?v=1.14`.

@@ -390,8 +390,9 @@ input:focus, select:focus, textarea:focus { border-color: var(--blue); box-shado
   margin-top: 10px;
 }
 .rtu-info-grid--inline {
+  grid-template-columns: repeat(3, minmax(140px, 1fr));
   margin-top: 0;
-  max-width: 520px;
+  max-width: 780px;
 }
 .rtu-info-item {
   min-width: 0;
@@ -413,6 +414,25 @@ input:focus, select:focus, textarea:focus { border-color: var(--blue); box-shado
   font-size: 12.5px;
   font-weight: 780;
   overflow-wrap: anywhere;
+}
+/* Multi-service view: keep the RTU metadata deliberately compact inside each card. */
+.rtu-info-grid--compact {
+  grid-template-columns: repeat(2, minmax(105px, 1fr));
+  gap: 6px;
+  margin-top: 7px;
+}
+.rtu-info-grid--compact .rtu-info-item {
+  padding: 5px 7px;
+  border-radius: 8px;
+}
+.rtu-info-grid--compact .rtu-info-label {
+  font-size: 8.5px;
+  letter-spacing: .035em;
+}
+.rtu-info-grid--compact .rtu-info-value {
+  margin-top: 2px;
+  font-size: 10.5px;
+  font-weight: 760;
 }
 @media (max-width: 680px) {
   .rtu-info-grid { grid-template-columns: 1fr; }
@@ -2285,6 +2305,7 @@ function renderRtuCard(subject, inline = false) {
   card.addEventListener("click", () => openDrawer(subject));
   const top = makeEl("div", "subject-top");
   const left = makeEl("div", inline ? "rtu-inline-heading" : "");
+  const shownStatus = subject.rtuWaiting ? "En attente complétion RTU" : (subject.status || "Statut non renseigné");
 
   if (!inline) {
     left.appendChild(makeEl("div", "subject-title", subject.title));
@@ -2293,16 +2314,18 @@ function renderRtuCard(subject, inline = false) {
     const inlineInfo = makeEl("div", "rtu-info-grid rtu-info-grid--inline");
     appendRtuInfo(inlineInfo, "Version RTU", subject.version || "Non renseignée");
     appendRtuInfo(inlineInfo, "Date de réception", formatDate(subject.receivedDate) || asText(subject.receivedDate) || "Non renseignée");
+    appendRtuInfo(inlineInfo, "Statut", shownStatus);
     left.appendChild(inlineInfo);
   }
 
   top.appendChild(left);
-  const shownStatus = subject.rtuWaiting ? "En attente complétion RTU" : (subject.status || "Statut non renseigné");
-  addBadge(top, shownStatus, subject.rtuWaiting ? "badge--waiting" : statusBadgeClass(shownStatus));
+  if (!inline) {
+    addBadge(top, shownStatus, subject.rtuWaiting ? "badge--waiting" : statusBadgeClass(shownStatus));
+  }
   card.appendChild(top);
 
   if (!inline) {
-    const info = makeEl("div", "rtu-info-grid");
+    const info = makeEl("div", "rtu-info-grid rtu-info-grid--compact");
     appendRtuInfo(info, "Version RTU", subject.version || "Non renseignée");
     appendRtuInfo(info, "Date de réception", formatDate(subject.receivedDate) || asText(subject.receivedDate) || "Non renseignée");
     card.appendChild(info);
