@@ -1,21 +1,15 @@
-# Dashboard Service Utilisateur — version 1.11
+# Dashboard Service Utilisateur — version 1.13
 
 Widget Grist multi-tables consolidant les RTU, sujets Réseau / Raccordement / Flux, EMM et chantiers de conception d’un ou plusieurs services utilisateurs.
 
 ## Évolutions de cette version
 
-- Les catégories EMM sont présentées sous forme de vrais boutons compacts.
-- Tous les boutons de catégorie tiennent sur une seule ligne ; un défilement horizontal discret reste disponible sur les écrans étroits.
-- Les sous-boutons par statut et les résumés de statut intégrés aux boutons ont été supprimés.
-- Chaque bouton conserve uniquement le nom de la catégorie et le nombre de sujets correspondant.
-- Le texte d’aide et le bouton « Désélectionner tout » sont placés sous les boutons de catégorie.
-- La sélection multiple des catégories reste disponible.
+- Pour un service utilisateur sélectionné, la section RTU ne présente plus le libellé redondant « RTU sans version ».
+- La version du RTU est affichée comme une information distincte dans le détail.
+- La date de réception du RTU est également affichée et modifiable lorsque la colonne existe dans `A_Suivi RTU`.
+- Le widget reconnaît plusieurs variantes de libellés pour ces colonnes, notamment `Version RTU`, `Versionning`, `Date de réception` et leurs variantes techniques.
+- Si plusieurs RTU existent exceptionnellement pour un même service, le plus récent selon la date de réception est affiché en priorité.
 
 ## Installation
 
 Publier `index.html` sur GitHub Pages avec `.nojekyll`, puis utiliser l’URL comme Custom Widget Grist avec **Full document access**.
-
-
-## V1.12 — sujets communs
-
-Un bouton **Masquer les sujets communs** a été ajouté à côté des filtres de recherche, statut et priorité. Lorsqu'il est activé, le dashboard masque les enregistrements dont la colonne **Service Utilisateur** vaut **Tous**, y compris lorsque cette valeur est stockée sous forme de texte ou de référence Grist. Le bouton reprend le design des boutons de catégorie EMM.

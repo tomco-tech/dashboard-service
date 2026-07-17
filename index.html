@@ -382,6 +382,43 @@ input:focus, select:focus, textarea:focus { border-color: var(--blue); box-shado
   background: transparent;
 }
 
+.rtu-inline-heading { min-width: 0; flex: 1; }
+.rtu-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(150px, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+.rtu-info-grid--inline {
+  margin-top: 0;
+  max-width: 520px;
+}
+.rtu-info-item {
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #f8fafc;
+}
+.rtu-info-label {
+  color: #7a8497;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .045em;
+}
+.rtu-info-value {
+  margin-top: 3px;
+  color: var(--ink);
+  font-size: 12.5px;
+  font-weight: 780;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 680px) {
+  .rtu-info-grid { grid-template-columns: 1fr; }
+  .rtu-info-grid--inline { max-width: none; }
+}
+
 .drawer-backdrop, .modal-backdrop { position: fixed; inset: 0; background: rgba(15, 23, 42, .38); z-index: 80; }
 .drawer {
   position: fixed;
@@ -1219,7 +1256,8 @@ const TABLE_DEFS = {
     sourceClass: "rtu",
     fields: {
       service: ["Service Utilisateur", "Service_Utilisateur"],
-      version: ["Version RTU", "Version_RTU"],
+      version: ["Version RTU", "Version_RTU", "Versionning", "Versioning", "Versionning RTU", "Versioning RTU", "Version du RTU", "Version"],
+      receivedDate: ["Date de réception", "Date de reception", "Date réception", "Date reception", "Date Réception", "Date Reception", "Date de réception RTU", "Date de reception RTU", "Date Réception RTU", "Date_Reception", "Date_de_reception", "Reception RTU", "Réception RTU"],
       status: ["Statut"],
       stage: ["Etape", "Étape"],
       raccordements: ["Statut Raccordements", "Statut_Raccordements"],
@@ -1306,6 +1344,7 @@ const EDIT_LAYOUTS = {
     { title: "Identification", fields: [
       { key: "service", label: "Service utilisateur", kind: "service" },
       { key: "version", label: "Version RTU" },
+      { key: "receivedDate", label: "Date de réception", kind: "date" },
       { key: "status", label: "Statut", kind: "choice" },
       { key: "stage", label: "Étape", kind: "choice" },
       { key: "owner", label: "Porteur prochaine action", kind: "actor" }
@@ -2082,7 +2121,10 @@ function normalizeSubject(sourceKey, table, row) {
 
   if (sourceKey === "rtu") {
     const version = displayFieldValue(table, row, "version").trim();
-    base.title = version ? `RTU ${version}` : "RTU sans version";
+    const receivedDate = fieldValue(table, row, "receivedDate");
+    base.version = version;
+    base.receivedDate = receivedDate;
+    base.title = version ? `RTU ${version}` : "RTU";
     base.owner = actorLabel(fieldValue(table, row, "owner"));
     base.description = displayFieldValue(table, row, "comment").trim();
     base.rtuState = rtuDomainState(table, row);
@@ -2121,7 +2163,11 @@ function subjectMatchesFilters(subject) {
 
 function sortSubjects(subjects) {
   return [...subjects].sort((a, b) => {
-    if (a.source === "rtu" && b.source === "rtu") return b.rowId - a.rowId;
+    if (a.source === "rtu" && b.source === "rtu") {
+      const dateA = Date.parse(dateToISO(a.receivedDate)) || 0;
+      const dateB = Date.parse(dateToISO(b.receivedDate)) || 0;
+      return dateB - dateA || b.rowId - a.rowId;
+    }
     return priorityRank(a.priority) - priorityRank(b.priority)
       || compareDate(a.date, b.date)
       || a.title.localeCompare(b.title, "fr");
@@ -2227,17 +2273,40 @@ function addBadge(container, value, className = "") {
   container.appendChild(makeEl("span", `badge ${className}`.trim(), value));
 }
 
+function appendRtuInfo(container, label, value) {
+  const item = makeEl("div", "rtu-info-item");
+  item.appendChild(makeEl("div", "rtu-info-label", label));
+  item.appendChild(makeEl("div", "rtu-info-value", value || "Non renseignée"));
+  container.appendChild(item);
+}
+
 function renderRtuCard(subject, inline = false) {
   const card = makeEl("article", `subject-card subject-card--rtu${inline ? " rtu-inline-detail" : ""}`);
   card.addEventListener("click", () => openDrawer(subject));
   const top = makeEl("div", "subject-top");
-  const left = makeEl("div");
-  left.appendChild(makeEl("div", "subject-title", subject.title));
-  left.appendChild(makeEl("div", "subject-service", subject.service || "Service non renseigné"));
+  const left = makeEl("div", inline ? "rtu-inline-heading" : "");
+
+  if (!inline) {
+    left.appendChild(makeEl("div", "subject-title", subject.title));
+    left.appendChild(makeEl("div", "subject-service", subject.service || "Service non renseigné"));
+  } else {
+    const inlineInfo = makeEl("div", "rtu-info-grid rtu-info-grid--inline");
+    appendRtuInfo(inlineInfo, "Version RTU", subject.version || "Non renseignée");
+    appendRtuInfo(inlineInfo, "Date de réception", formatDate(subject.receivedDate) || asText(subject.receivedDate) || "Non renseignée");
+    left.appendChild(inlineInfo);
+  }
+
   top.appendChild(left);
   const shownStatus = subject.rtuWaiting ? "En attente complétion RTU" : (subject.status || "Statut non renseigné");
   addBadge(top, shownStatus, subject.rtuWaiting ? "badge--waiting" : statusBadgeClass(shownStatus));
   card.appendChild(top);
+
+  if (!inline) {
+    const info = makeEl("div", "rtu-info-grid");
+    appendRtuInfo(info, "Version RTU", subject.version || "Non renseignée");
+    appendRtuInfo(info, "Date de réception", formatDate(subject.receivedDate) || asText(subject.receivedDate) || "Non renseignée");
+    card.appendChild(info);
+  }
 
   if (!subject.rtuWaiting) {
     const progress = makeEl("div", "rtu-progress");
@@ -2733,7 +2802,7 @@ function controlValue(control) {
 function openDrawer(subject) {
   activeSubject = subject;
   $("drawerSource").textContent = TABLE_DEFS[subject.source].sourceLabel;
-  $("drawerTitle").textContent = subject.title;
+  $("drawerTitle").textContent = subject.source === "rtu" && !subject.version ? "Détail du RTU" : subject.title;
   $("drawerSubtitle").textContent = [subject.service, subject.category].filter(Boolean).join(" · ");
   $("drawerMeta").textContent = `${TABLE_DEFS[subject.source].label} · ligne ${subject.rowId}`;
 
