@@ -329,6 +329,88 @@ input:focus, select:focus, textarea:focus { border-color: var(--blue); box-shado
 .subject-meta__left, .subject-meta__right { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .subject-owner { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .overdue { color: var(--red); font-weight: 800; }
+.subject-request-date {
+  color: #7a8497;
+  font-size: 10px;
+  line-height: 1.15;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.source-header__actions--emm {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.emm-priority-indicators {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.emm-priority-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 26px;
+  padding: 3px 7px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #f8fafc;
+  color: #4b576c;
+  font: inherit;
+  font-size: 10.5px;
+  line-height: 1;
+  font-weight: 850;
+  cursor: pointer;
+  transition: .16s ease;
+}
+.emm-priority-filter:hover {
+  transform: translateY(-1px);
+  border-color: #aeb9c8;
+  box-shadow: 0 3px 9px rgba(29, 43, 68, .08);
+}
+.emm-priority-filter.is-selected {
+  border-color: currentColor;
+  box-shadow: 0 0 0 2px rgba(47, 70, 120, .14);
+}
+.emm-priority-filter__count {
+  min-width: 17px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.72);
+  text-align: center;
+}
+.emm-priority-filter.badge--p0,
+.emm-priority-filter.badge--haute { background: #fee9e7; color: #b62924; }
+.emm-priority-filter.badge--p1 { background: #fff0d7; color: #a65600; }
+.emm-priority-filter.badge--p2,
+.emm-priority-filter.badge--moyenne { background: #e8f3ff; color: #176594; }
+.emm-priority-filter.badge--p3,
+.emm-priority-filter.badge--basse { background: #edf6f1; color: #23724e; }
+.emm-priority-filter.badge--p4 { background: #f2f4f7; color: #475467; }
+.rtu-completion-only {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  margin-top: 10px;
+  padding: 4px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #f8fafc;
+  color: #4b576c;
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 850;
+}
+@media (max-width: 760px) {
+  .emm-priority-indicators {
+    max-width: 58vw;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+}
 
 .badges { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
 .badge {
@@ -349,6 +431,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--blue); box-shado
 .badge--p1 { background: #fff0d7; color: #a65600; }
 .badge--p2, .badge--moyenne { background: #e8f3ff; color: #176594; }
 .badge--p3, .badge--basse { background: #edf6f1; color: #23724e; }
+.badge--p4 { background: #f2f4f7; color: #475467; }
 .badge--complete { background: #e6f6ee; color: #117149; }
 .badge--incomplete { background: #fff0d7; color: #9a5000; }
 .badge--na { background: #eef1f5; color: #667085; }
@@ -374,7 +457,6 @@ input:focus, select:focus, textarea:focus { border-color: var(--blue); box-shado
 .rtu-progress__line { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 5px; color: #667085; font-size: 11px; font-weight: 700; }
 .progress-track { height: 7px; border-radius: 999px; background: #e9edf3; overflow: hidden; }
 .progress-bar { height: 100%; border-radius: inherit; background: linear-gradient(90deg, #7357db, #3157ff); }
-.domain-grid { margin-top: 9px; display: flex; flex-wrap: wrap; gap: 5px; }
 
 /* A selected service has a single RTU: the RTU panel itself becomes the detail view. */
 .source-panel--rtu-detail .source-list {
@@ -1064,7 +1146,7 @@ body.loading .source-list, body.loading .kpi-bar, body.loading .service-profile 
   <div class="app-shell">
     <header class="topbar">
       <div class="brand-block">
-        <h1 id="dashboardTitle">Dashboard Commun</h1>
+        <h1 id="dashboardTitle">Tableau de Bord 360</h1>
         <span id="lastRefresh" class="last-refresh">Chargement…</span>
       </div>
       <div class="top-actions">
@@ -1190,7 +1272,8 @@ body.loading .source-list, body.loading .kpi-bar, body.loading .service-profile 
           <div>
             <h2>EMM</h2>
           </div>
-          <div class="source-header__actions">
+          <div class="source-header__actions source-header__actions--emm">
+            <div id="emmPriorityIndicators" class="emm-priority-indicators" aria-label="Filtres EMM par priorité"></div>
             <span id="emmCount" class="source-count">0</span>
             <button class="collapse-toggle" type="button" data-collapse-source="emm" aria-expanded="false" aria-controls="emmList" title="Développer la section">
               <span class="collapse-chevron" aria-hidden="true">⌄</span>
@@ -1482,7 +1565,7 @@ const EMM_CATEGORY_DEFS = [
   { key: "proxy_vip", label: "Proxy VIP" }
 ];
 
-const PRIORITY_RANK = { p0: 0, haute: 0, p1: 1, p2: 2, moyenne: 2, p3: 3, basse: 3 };
+const PRIORITY_RANK = { p0: 0, haute: 0, p1: 1, p2: 2, moyenne: 2, p3: 3, basse: 3, p4: 4 };
 
 const $ = (id) => document.getElementById(id);
 let widgetOptions = {};
@@ -1511,7 +1594,8 @@ const sourceCollapseState = Object.assign(
 );
 const emmFilterState = {
   categories: new Set(),
-  statuses: new Map()
+  statuses: new Map(),
+  priorities: new Set()
 };
 
 const filters = {
@@ -1526,7 +1610,7 @@ const filters = {
   hideCommonSubjects: false
 };
 
-const WIDGET_VERSION = "1.12.0";
+const WIDGET_VERSION = "1.17.0";
 const API_TIMEOUT_MS = 6000;
 window.__GRIST_SERVICE_DASHBOARD_VERSION__ = WIDGET_VERSION;
 
@@ -1584,7 +1668,7 @@ function dashboardTitleText() {
   if (community && department) return `Dashboard de la Communauté ${community} dans le Département ${department}`;
   if (community) return `Dashboard de la Communauté ${community}`;
   if (department) return `Dashboard du Département ${department}`;
-  return "Dashboard Commun";
+  return "Tableau de Bord 360";
 }
 
 function renderDashboardTitle() {
@@ -1766,6 +1850,7 @@ function priorityBadgeClass(value) {
   if (key === "p1") return "badge--p1";
   if (["p2", "moyenne"].includes(key)) return "badge--p2";
   if (["p3", "basse"].includes(key)) return "badge--p3";
+  if (key === "p4") return "badge--p4";
   return "";
 }
 
@@ -2334,8 +2419,12 @@ function renderRtuCard(subject, inline = false) {
   const shownStage = subject.stage || "Étape non renseignée";
 
   if (!inline) {
-    left.appendChild(makeEl("div", "subject-title", subject.title));
-    left.appendChild(makeEl("div", "subject-service", subject.service || "Service non renseigné"));
+    const combinedRtuTitle = [
+      subject.service || "Service non renseigné",
+      "RTU",
+      subject.version || ""
+    ].filter(Boolean).join(" - ");
+    left.appendChild(makeEl("div", "subject-title", combinedRtuTitle));
   } else {
     const inlineInfo = makeEl("div", "rtu-info-grid rtu-info-grid--inline");
     appendRtuInfo(inlineInfo, "Version RTU", subject.version || "Non renseignée");
@@ -2358,23 +2447,13 @@ function renderRtuCard(subject, inline = false) {
   }
 
   if (!subject.rtuWaiting) {
-    const progress = makeEl("div", "rtu-progress");
-    const line = makeEl("div", "rtu-progress__line");
-    line.appendChild(makeEl("span", "", `${subject.rtuState.completed}/${subject.rtuState.total} domaines complets ou N.A`));
-    line.appendChild(makeEl("span", "", `${subject.rtuState.percent}%`));
-    progress.appendChild(line);
-    const track = makeEl("div", "progress-track");
-    const bar = makeEl("div", "progress-bar");
-    bar.style.width = `${subject.rtuState.percent}%`;
-    track.appendChild(bar);
-    progress.appendChild(track);
-    card.appendChild(progress);
-
-    const domains = makeEl("div", "domain-grid");
-    subject.rtuState.values.forEach(({ key, value }) => {
-      addBadge(domains, `${DOMAIN_LABELS[key]} : ${value || "Non renseigné"}`, statusBadgeClass(value));
-    });
-    card.appendChild(domains);
+    card.appendChild(
+      makeEl(
+        "div",
+        "rtu-completion-only",
+        `${subject.rtuState.completed}/${subject.rtuState.total}`
+      )
+    );
   }
 
   if (subject.description) card.appendChild(makeEl("div", "subject-description", truncate(subject.description, 210)));
@@ -2429,6 +2508,7 @@ function selectedStatusesForEmmCategory(categoryKey) {
 function clearEmmFilters() {
   emmFilterState.categories.clear();
   emmFilterState.statuses.clear();
+  emmFilterState.priorities.clear();
   rerenderEmmOnly();
 }
 
@@ -2450,7 +2530,7 @@ function toggleEmmStatus(categoryKey, status) {
   rerenderEmmOnly();
 }
 
-function filterEmmSubjects(subjects) {
+function filterEmmSubjectsByCategory(subjects) {
   if (!emmFilterState.categories.size) return subjects;
   return subjects.filter((subject) => {
     const categoryKey = normalizeEmmCategory(subject.category);
@@ -2458,6 +2538,49 @@ function filterEmmSubjects(subjects) {
     const selectedStatuses = emmFilterState.statuses.get(categoryKey);
     if (!selectedStatuses || !selectedStatuses.size) return true;
     return selectedStatuses.has(subject.status || "Non renseigné");
+  });
+}
+
+function filterEmmSubjects(subjects) {
+  const categoryFiltered = filterEmmSubjectsByCategory(subjects);
+  if (!emmFilterState.priorities.size) return categoryFiltered;
+  return categoryFiltered.filter((subject) => emmFilterState.priorities.has(subject.priority || "Non renseignée"));
+}
+
+function toggleEmmPriority(priority) {
+  if (emmFilterState.priorities.has(priority)) emmFilterState.priorities.delete(priority);
+  else emmFilterState.priorities.add(priority);
+  rerenderEmmOnly();
+}
+
+function renderEmmPriorityIndicators(subjects) {
+  const container = $("emmPriorityIndicators");
+  if (!container) return;
+  container.replaceChildren();
+
+  const categoryFiltered = filterEmmSubjectsByCategory(subjects);
+  const priorities = uniqueValues(subjects.map((subject) => subject.priority))
+    .sort((a, b) => priorityRank(a) - priorityRank(b) || a.localeCompare(b, "fr"));
+
+  // Remove stale local selections when global filters no longer expose a priority.
+  [...emmFilterState.priorities].forEach((priority) => {
+    if (!priorities.includes(priority)) emmFilterState.priorities.delete(priority);
+  });
+
+  priorities.forEach((priority) => {
+    const count = categoryFiltered.filter((subject) => subject.priority === priority).length;
+    const selected = emmFilterState.priorities.has(priority);
+    const button = makeEl(
+      "button",
+      `emm-priority-filter ${priorityBadgeClass(priority)} ${selected ? "is-selected" : ""}`.trim()
+    );
+    button.type = "button";
+    button.setAttribute("aria-pressed", String(selected));
+    button.title = selected ? `Retirer le filtre ${priority}` : `Filtrer les sujets EMM sur ${priority}`;
+    button.appendChild(makeEl("span", "", priority));
+    button.appendChild(makeEl("span", "emm-priority-filter__count", String(count)));
+    button.addEventListener("click", () => toggleEmmPriority(priority));
+    container.appendChild(button);
   });
 }
 
@@ -2508,9 +2631,13 @@ function renderEmmList(subjects) {
   const table = runtimeTables.emm;
   if (table?.error) {
     count.textContent = "0";
+    const indicators = $("emmPriorityIndicators");
+    if (indicators) indicators.replaceChildren();
     list.appendChild(makeEl("div", "empty-state error-state", table.error));
     return;
   }
+
+  renderEmmPriorityIndicators(subjects);
 
   const scopedSubjects = allSubjects().filter((subject) => subject.source === "emm" && subjectMatchesServiceScope(subject));
   const definitions = emmCategoryDefinitions(subjects, scopedSubjects);
@@ -2526,10 +2653,21 @@ function renderEmmList(subjects) {
   toolbar.appendChild(filterGrid);
 
   const footer = makeEl("div", "emm-filter-footer");
-  footer.appendChild(makeEl("div", "emm-filter-toolbar__hint", emmFilterState.categories.size ? `${emmFilterState.categories.size} catégorie(s) sélectionnée(s)` : "Aucun filtre : tous les sujets sont affichés"));
+  const filterDescriptions = [];
+  if (emmFilterState.categories.size) filterDescriptions.push(`${emmFilterState.categories.size} catégorie(s)`);
+  if (emmFilterState.priorities.size) filterDescriptions.push(`${emmFilterState.priorities.size} priorité(s)`);
+  footer.appendChild(
+    makeEl(
+      "div",
+      "emm-filter-toolbar__hint",
+      filterDescriptions.length
+        ? `${filterDescriptions.join(" et ")} sélectionnée(s)`
+        : "Aucun filtre : tous les sujets sont affichés"
+    )
+  );
   const resetButton = makeEl("button", "emm-clear-filters", "Désélectionner tout");
   resetButton.type = "button";
-  resetButton.disabled = !emmFilterState.categories.size;
+  resetButton.disabled = !emmFilterState.categories.size && !emmFilterState.priorities.size;
   resetButton.addEventListener("click", clearEmmFilters);
   footer.appendChild(resetButton);
   toolbar.appendChild(footer);
@@ -2554,10 +2692,11 @@ function renderWorkCard(subject) {
   const top = makeEl("div", "subject-top");
   const left = makeEl("div");
   if (subject.source === "emm") {
-    // Pour les cartes EMM, le seul intitulé affiché est le Service Utilisateur.
-    // La colonne métier "Service" reste disponible dans la fiche d'édition,
-    // mais n'est plus répétée sur la carte du Dashboard Service Utilisateur.
-    left.appendChild(makeEl("div", "subject-title", subject.service || "Service utilisateur non renseigné"));
+    const combinedEmmTitle = [
+      subject.service || "Service utilisateur non renseigné",
+      subject.category || "Catégorie non renseignée"
+    ].join(" - ");
+    left.appendChild(makeEl("div", "subject-title", combinedEmmTitle));
   } else {
     left.appendChild(makeEl("div", "subject-title", subject.title));
     left.appendChild(makeEl("div", "subject-service", subject.service || "Service non renseigné"));
@@ -2573,7 +2712,7 @@ function renderWorkCard(subject) {
 
   const badges = makeEl("div", "badges");
   addBadge(badges, subject.priority, priorityBadgeClass(subject.priority));
-  addBadge(badges, subject.category);
+  if (subject.source !== "emm") addBadge(badges, subject.category);
   addBadge(badges, subject.caseType);
   // For Infra & Flux and Conception, the Statut remains visible in the body.
   if (subject.source !== "emm") {
@@ -2588,8 +2727,20 @@ function renderWorkCard(subject) {
   leftMeta.appendChild(makeEl("span", "subject-owner", subject.owner || "Porteur non renseigné"));
   const rightMeta = makeEl("div", "subject-meta__right");
   const date = formatDate(subject.date) || asText(subject.date);
-  const label = subject.source === "conception" ? "MEP" : subject.source === "infra" ? "Demandé le" : "Échéance";
-  if (date) rightMeta.appendChild(makeEl("span", isOverdue(subject.date, subject.status) ? "overdue" : "", `${label} ${date}`));
+  if (date) {
+    if (subject.source === "infra") {
+      rightMeta.appendChild(makeEl("span", "subject-request-date", `Date demande : ${date}`));
+    } else {
+      const label = subject.source === "conception" ? "MEP" : "Échéance";
+      rightMeta.appendChild(
+        makeEl(
+          "span",
+          isOverdue(subject.date, subject.status) ? "overdue" : "",
+          `${label} ${date}`
+        )
+      );
+    }
+  }
   meta.appendChild(leftMeta);
   meta.appendChild(rightMeta);
   card.appendChild(meta);
