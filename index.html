@@ -1139,6 +1139,100 @@ body.loading .source-list, body.loading .kpi-bar, body.loading .service-profile 
   .common-subject-filter .common-subject-toggle { width: 100%; }
 }
 
+
+
+/* V1.18 — RTU compact, workflow stacks and global filter reset */
+.workflow-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-start;
+  gap: 5px;
+  flex: 0 0 auto;
+  max-width: 48%;
+}
+.workflow-stack .badge {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rtu-date-inline {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  margin-top: 9px;
+  color: #69758a;
+  line-height: 1.25;
+}
+.rtu-date-inline__label {
+  flex: 0 0 auto;
+  font-size: 10px;
+  font-weight: 760;
+  color: #7a8497;
+}
+.rtu-date-inline__value {
+  min-width: 0;
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #4b576c;
+  overflow-wrap: anywhere;
+}
+.rtu-mini-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+.rtu-mini-progress .progress-track {
+  flex: 1 1 auto;
+  min-width: 70px;
+  height: 5px;
+  background: #e6eaf0;
+}
+.rtu-mini-progress .progress-bar {
+  background: #697386 !important;
+}
+.rtu-mini-progress__value {
+  flex: 0 0 auto;
+  color: #667085;
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 850;
+  white-space: nowrap;
+}
+.filter-row--work {
+  grid-template-columns: minmax(260px, 1.5fr) minmax(155px, .62fr) minmax(145px, .56fr) auto auto !important;
+}
+.reset-all-filter {
+  align-self: center;
+  display: flex;
+  align-items: center;
+  min-width: max-content;
+}
+.reset-all-filter .reset-filters-toggle {
+  min-height: 38px;
+  padding: 7px 11px;
+}
+@media (max-width: 1250px) {
+  .filter-row--work {
+    grid-template-columns: minmax(210px, 1.35fr) minmax(135px, .8fr) minmax(135px, .8fr) auto auto !important;
+  }
+}
+@media (max-width: 900px) {
+  .filter-row--work { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .filter-row--work .compact-filter--search { grid-column: 1 / -1; }
+  .common-subject-filter,
+  .reset-all-filter { min-width: 0; }
+  .common-subject-filter .common-subject-toggle,
+  .reset-all-filter .reset-filters-toggle { width: 100%; }
+}
+@media (max-width: 620px) {
+  .filter-row--work { grid-template-columns: 1fr !important; }
+  .filter-row--work .compact-filter--search { grid-column: auto; }
+  .workflow-stack { max-width: 54%; }
+}
+
 </style>
   <script src="https://docs.getgrist.com/grist-plugin-api.js" onerror="document.getElementById('lastRefresh').textContent='Erreur : API Grist non chargée'"></script>
 </head>
@@ -1226,6 +1320,14 @@ body.loading .source-list, body.loading .kpi-bar, body.loading .service-profile 
           <button id="hideCommonSubjectsBtn" class="emm-filter-main common-subject-toggle" type="button" aria-pressed="false" title="Masquer les sujets dont le Service Utilisateur vaut Tous">
             <span class="emm-filter-heading">
               <span class="emm-filter-label">Masquer les sujets communs</span>
+            </span>
+          </button>
+        </div>
+
+        <div class="emm-filter-item reset-all-filter">
+          <button id="resetFiltersBtn" class="emm-filter-main reset-filters-toggle" type="button" title="Réinitialiser tous les filtres du dashboard">
+            <span class="emm-filter-heading">
+              <span class="emm-filter-label">Réinitialiser les filtres</span>
             </span>
           </button>
         </div>
@@ -1610,7 +1712,7 @@ const filters = {
   hideCommonSubjects: false
 };
 
-const WIDGET_VERSION = "1.17.0";
+const WIDGET_VERSION = "1.18.0";
 const API_TIMEOUT_MS = 6000;
 window.__GRIST_SERVICE_DASHBOARD_VERSION__ = WIDGET_VERSION;
 
@@ -2410,53 +2512,62 @@ function appendRtuInfo(container, label, value) {
   container.appendChild(item);
 }
 
+function rtuVersionForTitle(value) {
+  const cleaned = asText(value).trim().replace(/^v[\s._-]*/i, "");
+  return cleaned ? `v${cleaned}` : "";
+}
+
+function appendRtuDateInline(container, value) {
+  const row = makeEl("div", "rtu-date-inline");
+  row.appendChild(makeEl("span", "rtu-date-inline__label", "Date de réception :"));
+  row.appendChild(
+    makeEl(
+      "span",
+      "rtu-date-inline__value",
+      formatDate(value) || asText(value) || "Non renseignée"
+    )
+  );
+  container.appendChild(row);
+}
+
+function appendRtuProgressMinimal(container, state) {
+  const completed = Number(state?.completed || 0);
+  const total = Number(state?.total || 7) || 7;
+  const percent = Math.max(0, Math.min(100, Math.round((completed / total) * 100)));
+  const wrapper = makeEl("div", "rtu-mini-progress");
+  const track = makeEl("div", "progress-track");
+  const bar = makeEl("div", "progress-bar");
+  bar.style.width = `${percent}%`;
+  track.appendChild(bar);
+  wrapper.appendChild(track);
+  wrapper.appendChild(makeEl("span", "rtu-mini-progress__value", `${completed}/${total}`));
+  container.appendChild(wrapper);
+}
+
 function renderRtuCard(subject, inline = false) {
   const card = makeEl("article", `subject-card subject-card--rtu${inline ? " rtu-inline-detail" : ""}`);
   card.addEventListener("click", () => openDrawer(subject));
+
   const top = makeEl("div", "subject-top");
   const left = makeEl("div", inline ? "rtu-inline-heading" : "");
   const shownStatus = subject.rtuWaiting ? "En attente complétion RTU" : (subject.status || "Statut non renseigné");
   const shownStage = subject.stage || "Étape non renseignée";
 
   if (!inline) {
-    const combinedRtuTitle = [
-      subject.service || "Service non renseigné",
-      "RTU",
-      subject.version || ""
-    ].filter(Boolean).join(" - ");
-    left.appendChild(makeEl("div", "subject-title", combinedRtuTitle));
-  } else {
-    const inlineInfo = makeEl("div", "rtu-info-grid rtu-info-grid--inline");
-    appendRtuInfo(inlineInfo, "Version RTU", subject.version || "Non renseignée");
-    appendRtuInfo(inlineInfo, "Date de réception", formatDate(subject.receivedDate) || asText(subject.receivedDate) || "Non renseignée");
-    appendRtuInfo(inlineInfo, "Statut", shownStatus);
-    left.appendChild(inlineInfo);
+    const version = rtuVersionForTitle(subject.version);
+    const title = [subject.service || "Service non renseigné", version].filter(Boolean).join(" ");
+    left.appendChild(makeEl("div", "subject-title", title));
   }
-
   top.appendChild(left);
-  // RTU cards are piloted by the Étape; the Statut remains visible in the card body.
-  addBadge(top, shownStage, workflowBadgeClass(subject.stage));
+
+  const workflow = makeEl("div", "workflow-stack");
+  addBadge(workflow, shownStage, workflowBadgeClass(subject.stage));
+  addBadge(workflow, shownStatus, workflowBadgeClass(shownStatus));
+  top.appendChild(workflow);
   card.appendChild(top);
 
-  if (!inline) {
-    const info = makeEl("div", "rtu-info-grid rtu-info-grid--compact");
-    appendRtuInfo(info, "Version RTU", subject.version || "Non renseignée");
-    appendRtuInfo(info, "Date de réception", formatDate(subject.receivedDate) || asText(subject.receivedDate) || "Non renseignée");
-    appendRtuInfo(info, "Statut", shownStatus);
-    card.appendChild(info);
-  }
-
-  if (!subject.rtuWaiting) {
-    card.appendChild(
-      makeEl(
-        "div",
-        "rtu-completion-only",
-        `${subject.rtuState.completed}/${subject.rtuState.total}`
-      )
-    );
-  }
-
-  if (subject.description) card.appendChild(makeEl("div", "subject-description", truncate(subject.description, 210)));
+  appendRtuDateInline(card, subject.receivedDate);
+  if (!subject.rtuWaiting) appendRtuProgressMinimal(card, subject.rtuState);
   return card;
 }
 
@@ -2703,29 +2814,37 @@ function renderWorkCard(subject) {
   }
   top.appendChild(left);
 
-  // EMM has no Étape column: its Statut remains the workflow badge.
-  // All other sources display Étape at the top-right.
-  const workflowValue = subject.source === "emm" ? subject.status : subject.stage;
-  const workflowFallback = subject.source === "emm" ? "Statut non renseigné" : "Étape non renseignée";
-  addBadge(top, workflowValue || workflowFallback, workflowBadgeClass(workflowValue));
+  const workflow = makeEl("div", "workflow-stack");
+  if (subject.source === "emm") {
+    addBadge(workflow, subject.status || "Statut non renseigné", workflowBadgeClass(subject.status));
+  } else if (subject.source === "infra") {
+    addBadge(workflow, subject.stage || "Étape non renseignée", workflowBadgeClass(subject.stage));
+    addBadge(workflow, subject.status || "Statut non renseigné", workflowBadgeClass(subject.status));
+  } else {
+    addBadge(workflow, subject.stage || "Étape non renseignée", workflowBadgeClass(subject.stage));
+  }
+  top.appendChild(workflow);
   card.appendChild(top);
 
   const badges = makeEl("div", "badges");
   addBadge(badges, subject.priority, priorityBadgeClass(subject.priority));
   if (subject.source !== "emm") addBadge(badges, subject.category);
   addBadge(badges, subject.caseType);
-  // For Infra & Flux and Conception, the Statut remains visible in the body.
-  if (subject.source !== "emm") {
+  if (subject.source === "conception") {
     addBadge(badges, `Statut : ${subject.status || "Non renseigné"}`, "badge--workflow");
   }
-  card.appendChild(badges);
+  if (badges.childElementCount) card.appendChild(badges);
 
   if (subject.description) card.appendChild(makeEl("div", "subject-description", truncate(subject.description, 220)));
 
   const meta = makeEl("div", "subject-meta");
   const leftMeta = makeEl("div", "subject-meta__left");
-  leftMeta.appendChild(makeEl("span", "subject-owner", subject.owner || "Porteur non renseigné"));
   const rightMeta = makeEl("div", "subject-meta__right");
+
+  if (subject.source === "emm") {
+    leftMeta.appendChild(makeEl("span", "subject-owner", subject.owner || "Porteur non renseigné"));
+  }
+
   const date = formatDate(subject.date) || asText(subject.date);
   if (date) {
     if (subject.source === "infra") {
@@ -2741,9 +2860,10 @@ function renderWorkCard(subject) {
       );
     }
   }
-  meta.appendChild(leftMeta);
-  meta.appendChild(rightMeta);
-  card.appendChild(meta);
+
+  if (leftMeta.childElementCount) meta.appendChild(leftMeta);
+  if (rightMeta.childElementCount) meta.appendChild(rightMeta);
+  if (meta.childElementCount) card.appendChild(meta);
   return card;
 }
 
@@ -2844,6 +2964,41 @@ function clearSelectedService() {
   $("clearServiceBtn").classList.add("hidden");
   closeServiceDropdown();
   renderDashboard();
+}
+
+function resetAllFilters() {
+  selectedService = null;
+  serviceComboIndex = -1;
+
+  filters.community = "";
+  filters.department = "";
+  filters.deploymentStatus = "";
+  filters.deploymentPriority = "";
+  filters.search = "";
+  filters.status = "";
+  filters.priority = "";
+  filters.hideClosed = false;
+  filters.hideCommonSubjects = false;
+
+  emmFilterState.categories.clear();
+  emmFilterState.statuses.clear();
+  emmFilterState.priorities.clear();
+
+  const serviceSearch = $("serviceSearch");
+  if (serviceSearch) serviceSearch.value = "";
+  $("clearServiceBtn")?.classList.add("hidden");
+  const globalSearch = $("globalSearch");
+  if (globalSearch) globalSearch.value = "";
+  ["communityFilter", "departmentFilter", "deploymentStatusFilter", "deploymentPriorityFilter", "statusFilter", "priorityFilter"].forEach((id) => {
+    const control = $(id);
+    if (control) control.value = "";
+  });
+  const hideClosed = $("hideClosedToggle");
+  if (hideClosed) hideClosed.checked = false;
+
+  closeServiceDropdown();
+  renderDashboard();
+  showToast("Filtres réinitialisés");
 }
 
 function columnMeta(table, colId) {
@@ -3377,6 +3532,7 @@ function bindEvents() {
     filters.hideCommonSubjects = !filters.hideCommonSubjects;
     renderDashboard();
   });
+  $("resetFiltersBtn").addEventListener("click", resetAllFilters);
   $("hideClosedToggle")?.addEventListener("change", (event) => { filters.hideClosed = event.target.checked; renderDashboard(); });
 
   document.addEventListener("click", (event) => {
