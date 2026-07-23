@@ -537,6 +537,104 @@ input:focus, select:focus, textarea:focus { border-color: var(--blue); box-shado
   .rtu-info-grid--inline { max-width: none; }
 }
 
+
+/* Ergonomic source-aware editor controls. */
+.drawer { width: min(740px, 96vw); }
+.form-section {
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fbfcfe;
+}
+.form-section + .form-section { margin-top: 14px; }
+.form-section h3 { margin-bottom: 12px; }
+.form-grid { gap: 13px 12px; }
+.form-field { position: relative; }
+.form-field label { font-size: 11px; }
+.form-field-help { display: block; margin: 5px 2px 0; color: #7b8799; font-size: 10.5px; line-height: 1.35; }
+.form-field input:not([type="checkbox"]),
+.form-field select,
+.form-field textarea,
+.smart-picker-shell {
+  min-height: 40px;
+  border-radius: 10px;
+}
+.form-field textarea { min-height: 112px; }
+.form-field input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--blue); }
+.form-field--toggle { display: flex; align-items: flex-end; }
+.toggle-control { min-height: 40px; display: flex; align-items: center; gap: 9px; padding: 0 10px; border: 1px solid var(--line-strong); border-radius: 10px; background: #fff; }
+
+.smart-picker { position: relative; min-width: 0; }
+.smart-picker-shell {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 5px 7px;
+  border: 1px solid var(--line-strong);
+  background: #fff;
+  transition: .15s ease;
+}
+.smart-picker:focus-within .smart-picker-shell { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(49, 87, 255, .11); }
+.smart-picker-input { flex: 1 1 130px; min-width: 90px; height: 28px !important; border: 0 !important; padding: 0 4px !important; box-shadow: none !important; background: transparent !important; }
+.smart-picker-input:focus { box-shadow: none !important; }
+.smart-picker-clear { width: 26px; height: 26px; border: 0; border-radius: 7px; background: #eef2f7; color: #657084; font-size: 17px; line-height: 1; }
+.smart-picker-menu {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 0;
+  right: 0;
+  z-index: 120;
+  max-height: 230px;
+  overflow-y: auto;
+  padding: 5px;
+  border: 1px solid var(--line-strong);
+  border-radius: 11px;
+  background: #fff;
+  box-shadow: 0 16px 36px rgba(29, 43, 68, .16);
+}
+.smart-picker-option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 9px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  font-size: 12.5px;
+}
+.smart-picker-option:hover, .smart-picker-option.is-selected { background: #eef2ff; }
+.smart-picker-option-mark { color: var(--blue); font-weight: 900; }
+.smart-picker-empty { padding: 10px; color: var(--muted); font-size: 12px; }
+.smart-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  padding: 4px 7px;
+  border: 1px solid #d8e0eb;
+  border-radius: 999px;
+  background: #f4f7fb;
+  color: #344054;
+  font-size: 11.5px;
+  font-weight: 720;
+}
+.smart-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.smart-chip-remove { border: 0; background: transparent; color: #778298; padding: 0; font-size: 14px; line-height: 1; }
+.smart-selected-label { flex: 1 1 160px; min-width: 0; padding: 2px 4px; color: var(--ink); font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.readonly-value { min-height: 40px; display: flex; align-items: center; }
+.source-write-note { margin: 0 0 12px; padding: 9px 10px; border-radius: 10px; background: #f1f4f8; color: #536176; font-size: 11px; line-height: 1.4; }
+.save-verification { color: #526078; font-size: 10.5px; }
+@media (max-width: 760px) {
+  .drawer { width: 100vw; }
+  .form-section { padding: 11px; }
+}
+
 .drawer-backdrop, .modal-backdrop { position: fixed; inset: 0; background: rgba(15, 23, 42, .38); z-index: 80; }
 .drawer {
   position: fixed;
@@ -1530,7 +1628,7 @@ const TABLE_DEFS = {
       assignees: ["Assignée à", "Assignee_a", "Assignee_a_"],
       comment: ["Commentaire"],
       rtu: ["RTU"],
-      sprint: ["Sprint"],
+      target: ["Cible", "Date cible", "Date_cible"],
       createdBy: ["Créée par", "Creee_par", "Cree_par"],
       createdAt: ["Créé le", "Cree_le", "Creee_le"],
       requester: ["CP/Demandeur", "CP_Demandeur"],
@@ -1563,10 +1661,10 @@ const TABLE_DEFS = {
 const EDIT_LAYOUTS = {
   rtu: [
     { title: "Identification", fields: [
-      { key: "service", label: "Service utilisateur", kind: "service" },
+      { key: "service", label: "Service utilisateur", kind: "service", full: true, help: "Recherchez un service utilisateur dans le référentiel." },
       { key: "version", label: "Version RTU" },
       { key: "receivedDate", label: "Date de réception", kind: "date" },
-      { key: "status", label: "Statut", kind: "choice" },
+      { key: "status", label: "Statut", kind: "choice", help: "Seuls les statuts applicables au RTU sont proposés." },
       { key: "stage", label: "Étape", kind: "choice" },
       { key: "owner", label: "Porteur prochaine action", kind: "actor" }
     ]},
@@ -1585,7 +1683,7 @@ const EDIT_LAYOUTS = {
   ],
   infra: [
     { title: "Sujet", fields: [
-      { key: "service", label: "Service utilisateur", kind: "service", full: true },
+      { key: "service", label: "Service utilisateur", kind: "service", full: true, help: "Recherchez un ou plusieurs services utilisateurs selon le type de la colonne." },
       { key: "title", label: "Intitulé", full: true },
       { key: "category", label: "Catégorie", kind: "choice" },
       { key: "requestDate", label: "Date de la demande", kind: "date" }
@@ -1604,18 +1702,18 @@ const EDIT_LAYOUTS = {
   ],
   emm: [
     { title: "Sujet", fields: [
-      { key: "service", label: "Service utilisateur", kind: "service" },
+      { key: "service", label: "Service utilisateur", kind: "service", full: true, help: "Recherchez un service utilisateur dans le référentiel." },
       { key: "serviceType", label: "Titre / Service" },
       { key: "category", label: "Catégorie", kind: "choice" },
       { key: "caseType", label: "Cas", kind: "choice" },
-      { key: "rtu", label: "RTU", kind: "choice" },
-      { key: "sprint", label: "Sprint", kind: "choice" }
+      { key: "rtu", label: "RTU" },
+      { key: "target", label: "Cible", kind: "date" }
     ]},
     { title: "Suivi", fields: [
       { key: "status", label: "Statut", kind: "choice" },
       { key: "priority", label: "Priorité", kind: "choice" },
       { key: "desiredDate", label: "Date souhaitée", kind: "date" },
-      { key: "assignees", label: "Assignée à", kind: "actor", full: true },
+      { key: "assignees", label: "Assignée à", kind: "actor", full: true, help: "Ajoutez une ou plusieurs personnes depuis le référentiel des acteurs." },
       { key: "requester", label: "CP / Demandeur", kind: "actor" },
       { key: "createdBy", label: "Créée par", kind: "actor" },
       { key: "createdAt", label: "Créé le", kind: "date", readonly: true },
@@ -1628,13 +1726,13 @@ const EDIT_LAYOUTS = {
   ],
   conception: [
     { title: "Sujet", fields: [
-      { key: "service", label: "Service utilisateur", kind: "service", full: true },
+      { key: "service", label: "Service utilisateur", kind: "service", full: true, help: "Recherchez un ou plusieurs services utilisateurs selon le type de la colonne." },
       { key: "title", label: "Intitulé", full: true },
       { key: "category", label: "Catégorie", kind: "choice" },
       { key: "owners", label: "Porteurs", kind: "actor", full: true }
     ]},
     { title: "Suivi", fields: [
-      { key: "status", label: "Statut", kind: "choice" },
+      { key: "status", label: "Statut", kind: "textChoice", help: "Saisie libre avec suggestions issues des valeurs déjà présentes." },
       { key: "stage", label: "Étape", kind: "choice" },
       { key: "mepDate", label: "Date cible de mise en production", kind: "date" },
       { key: "statusTimestamp", label: "Statut modifié le", kind: "date", readonly: true },
@@ -1646,6 +1744,68 @@ const EDIT_LAYOUTS = {
       { key: "nextActions", label: "Prochaines actions", kind: "textarea", full: true }
     ]}
   ]
+};
+
+const FIELD_OPTION_SETS = {
+  "rtu.status": [
+    "En attente complétion RTU",
+    "En attente retour CU",
+    "En cours de priorisation",
+    "Vérification de complétude",
+    "Accepté",
+    "Demande de compléments d'informations",
+    "En développement",
+    "En Test",
+    "Configuration déployé",
+    "Abandonné"
+  ],
+  "rtu.stage": ["En cours DUD", "En cours DT", "En cours CU", "En cours Eviden", "Terminé"],
+  "rtu.raccordements": ["Non démarré", "Incomplet", "Complet", "N.A.", "N.A"],
+  "rtu.wifi": ["Non démarré", "Incomplet", "Complet", "N.A.", "N.A"],
+  "rtu.applications": ["Non démarré", "Incomplet", "Complet", "N.A.", "N.A"],
+  "rtu.messagerie": ["Non démarré", "Incomplet", "Complet", "N.A.", "N.A"],
+  "rtu.emm": ["Non démarré", "Incomplet", "Complet", "N.A.", "N.A"],
+  "rtu.passerellage": ["Non démarré", "Incomplet", "Complet", "N.A.", "N.A"],
+  "rtu.mdg": ["Non démarré", "Incomplet", "Complet", "N.A.", "N.A"],
+  "infra.priority": ["P0", "P1", "P2", "P3", "P4"],
+  "infra.status": [
+    "Ticket à créer",
+    "Prêt pour passage commande",
+    "Commande passée",
+    "En conception",
+    "En cours de configuration",
+    "En cours de test",
+    "En attente d'informations",
+    "Terminé",
+    "Abandonné"
+  ],
+  "infra.stage": ["En cours DUD", "En cours DT", "En cours CU", "En cours Eviden", "En cours GME", "En cours DTNUM", "Terminé"],
+  "emm.priority": ["P0", "P1", "P2", "P3", "P4"],
+  "emm.caseType": ["Standard", "Spécifique"],
+  "emm.status": ["Nouveau", "En attente CU", "En cours DUD", "En cours DT", "En conception", "Terminé"],
+  "conception.stage": ["En cours DUD", "En cours DT", "En cours CU", "En cours Eviden", "En cours GME", "En cours DTNUM", "Terminé"]
+};
+
+const FIELD_GROUP_HINTS = {
+  "rtu.status": ["statut rtu", "suivi rtu"],
+  "rtu.stage": ["etape rtu", "étape rtu"],
+  "rtu.raccordements": ["statut completude rtu", "complétude rtu"],
+  "rtu.wifi": ["statut completude rtu", "complétude rtu"],
+  "rtu.applications": ["statut completude rtu", "complétude rtu"],
+  "rtu.messagerie": ["statut completude rtu", "complétude rtu"],
+  "rtu.emm": ["statut completude rtu", "complétude rtu"],
+  "rtu.passerellage": ["statut completude rtu", "complétude rtu"],
+  "rtu.mdg": ["statut completude rtu", "complétude rtu"],
+  "infra.priority": ["priorite dud", "priorité dud", "priorite"],
+  "infra.status": ["statut infra flux", "statut infrastructure", "statut raccordement"],
+  "infra.stage": ["etape infra flux", "étape infrastructure", "etape raccordement"],
+  "emm.category": ["categorie emm", "catégorie emm"],
+  "emm.caseType": ["cas emm", "cas"],
+  "emm.priority": ["priorite emm", "priorité emm", "priorite"],
+  "emm.status": ["statut emm"],
+  "conception.category": ["categorie chantier", "catégorie chantier"],
+  "conception.status": ["statut chantier", "statut conception"],
+  "conception.stage": ["etape chantier", "étape chantier", "etape conception"]
 };
 
 const CLOSED_STATUS_WORDS = ["deploye", "deployee", "termine", "terminee", "clos", "cloture", "cloturee", "abandonne", "abandonnee", "annule", "annulee", "rejete", "rejetee", "valide", "validee"];
@@ -1712,7 +1872,7 @@ const filters = {
   hideCommonSubjects: false
 };
 
-const WIDGET_VERSION = "1.18.0";
+const WIDGET_VERSION = "1.19.0";
 const API_TIMEOUT_MS = 6000;
 window.__GRIST_SERVICE_DASHBOARD_VERSION__ = WIDGET_VERSION;
 
@@ -1994,6 +2154,17 @@ async function findTableId(def, override) {
   return fuzzy || null;
 }
 
+function parseJsonObject(value) {
+  if (!value) return {};
+  if (typeof value === "object") return value;
+  try {
+    const parsed = JSON.parse(String(value));
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch (_) {
+    return {};
+  }
+}
+
 async function loadMetadata() {
   metadataByTable = new Map();
   columnMetaById = new Map();
@@ -2013,7 +2184,8 @@ async function loadMetadata() {
         type: row.type || "Any",
         isFormula: Boolean(row.isFormula),
         visibleColMetaId: Number(row.visibleCol || 0),
-        displayColMetaId: Number(row.displayCol || 0)
+        displayColMetaId: Number(row.displayCol || 0),
+        widgetOptions: parseJsonObject(row.widgetOptions)
       };
       columnMetaById.set(meta.metaId, meta);
       if (!metadataByTable.has(tableId)) metadataByTable.set(tableId, new Map());
@@ -2070,6 +2242,28 @@ function chooseReferenceDisplayColumn(tableId, raw) {
   }) || keys[0] || "";
 }
 
+function chooseReferenceGroupColumn(tableId, raw, displayCol) {
+  const keys = Object.keys(raw || {}).filter((key) => key !== "id" && key !== displayCol);
+  const targetMeta = metadataByTable.get(tableId) || new Map();
+  const preferred = ["liste", "type de liste", "type_liste", "referentiel", "référentiel", "groupe", "famille", "categorie", "catégorie"];
+  const rows = tableRows(raw);
+
+  const useful = (key) => {
+    const values = rows.map((row) => asText(row[key]).trim()).filter(Boolean);
+    const unique = new Set(values.map(normalizeKey));
+    return unique.size >= 2 && unique.size < Math.max(3, Math.ceil(rows.length * .75));
+  };
+
+  for (const alias of preferred.map(normalizeKey)) {
+    const key = keys.find((candidate) => {
+      const meta = targetMeta.get(candidate);
+      return normalizeKey(candidate) === alias || normalizeKey(meta?.label) === alias;
+    });
+    if (key && useful(key)) return key;
+  }
+  return "";
+}
+
 async function loadReferenceCatalogs() {
   referenceCatalogs = new Map();
   const targets = new Set();
@@ -2083,14 +2277,25 @@ async function loadReferenceCatalogs() {
       const raw = await safeFetchTable(tableId);
       const rows = tableRows(raw);
       const displayCol = chooseReferenceDisplayColumn(tableId, raw);
+      const targetMeta = metadataByTable.get(tableId) || new Map();
+      const activeCol = Object.keys(raw || {}).find((key) => {
+        const label = targetMeta.get(key)?.label || key;
+        return ["actif", "active", "enabled"].includes(normalizeKey(label));
+      });
       const items = rows.map((row) => {
+        if (activeCol) {
+          const activeValue = row[activeCol];
+          const inactive = activeValue === false || activeValue === 0 || activeValue === "0" || ["non", "false", "inactif"].includes(normalizeKey(activeValue));
+          if (inactive) return null;
+        }
         let label = displayCol ? asText(row[displayCol]).trim() : "";
         if (!label || label === "0") label = `#${row.id}`;
         return { id: Number(row.id), label, rawRow: row };
-      }).filter((item) => item.id);
+      }).filter((item) => item?.id);
       referenceCatalogs.set(tableId, {
         tableId,
         displayCol,
+        groupCol: chooseReferenceGroupColumn(tableId, raw, displayCol),
         items,
         byId: new Map(items.map((item) => [item.id, item]))
       });
@@ -3009,7 +3214,7 @@ function fieldOptions(subject, fieldKey) {
   const table = subject.table;
   const colId = table.columns[fieldKey];
   if (!colId) return [];
-  return uniqueValues(table.rows.map((row) => asText(row[colId])));
+  return uniqueValues(table.rows.map((row) => displayRawValue(row[colId], columnMeta(table, colId))));
 }
 
 function targetCatalog(kind) {
@@ -3018,6 +3223,111 @@ function targetCatalog(kind) {
 
 function targetCatalogMap(kind) {
   return kind === "service" ? serviceById : kind === "actor" ? actorById : new Map();
+}
+
+function orderedUniqueValues(values) {
+  const seen = new Set();
+  const output = [];
+  values.map(asText).map((value) => value.trim()).filter(Boolean).forEach((value) => {
+    const key = normalizeKey(value);
+    if (seen.has(key)) return;
+    seen.add(key);
+    output.push(value);
+  });
+  return output;
+}
+
+function explicitFieldOptions(subject, field) {
+  return FIELD_OPTION_SETS[`${subject.source}.${field.key}`] || [];
+}
+
+function choiceOptionsFromMetadata(meta) {
+  const options = meta?.widgetOptions || {};
+  const choices = Array.isArray(options.choices) ? options.choices : [];
+  return choices.map(asText).filter(Boolean);
+}
+
+function backendGroupHints(subject, field) {
+  return FIELD_GROUP_HINTS[`${subject.source}.${field.key}`] || [];
+}
+
+function scoreGroupLabel(label, hints) {
+  const value = normalizeKey(label);
+  if (!value) return 0;
+  let score = 0;
+  hints.map(normalizeKey).forEach((hint) => {
+    if (!hint) return;
+    if (value === hint) score = Math.max(score, 100);
+    else if (value.includes(hint) || hint.includes(value)) score = Math.max(score, 70);
+    else {
+      const tokens = hint.match(/[a-z0-9]+/g) || [];
+      const matched = tokens.filter((token) => token.length > 2 && value.includes(token)).length;
+      score = Math.max(score, matched * 12);
+    }
+  });
+  return score;
+}
+
+function referenceItemsForField(subject, field, raw, meta) {
+  const target = referenceTarget(meta?.type || "");
+  const catalog = referenceCatalogs.get(target);
+  if (!catalog) return [];
+  let items = [...catalog.items];
+  const currentIds = listValues(raw).map(Number).filter(Boolean);
+
+  // REF_Backend-like tables usually contain many unrelated lists. Prefer the
+  // same group as the current value, or infer the intended group from context.
+  if (catalog.groupCol) {
+    const currentGroups = new Set(currentIds.map((id) => {
+      const item = catalog.byId.get(id);
+      return normalizeKey(item?.rawRow?.[catalog.groupCol]);
+    }).filter(Boolean));
+    if (currentGroups.size) {
+      items = items.filter((item) => currentGroups.has(normalizeKey(item.rawRow?.[catalog.groupCol])));
+    } else {
+      const hints = backendGroupHints(subject, field);
+      if (hints.length) {
+        const groups = uniqueValues(catalog.items.map((item) => asText(item.rawRow?.[catalog.groupCol])));
+        const ranked = groups.map((group) => ({ group, score: scoreGroupLabel(group, hints) })).sort((a, b) => b.score - a.score);
+        if (ranked[0]?.score > 0) {
+          const selectedGroup = normalizeKey(ranked[0].group);
+          items = items.filter((item) => normalizeKey(item.rawRow?.[catalog.groupCol]) === selectedGroup);
+        }
+      }
+    }
+  }
+
+  const explicit = explicitFieldOptions(subject, field);
+  if (explicit.length) {
+    const allowed = new Set(explicit.map(normalizeKey));
+    const filtered = items.filter((item) => allowed.has(normalizeKey(item.label)));
+    if (filtered.length) items = filtered;
+  } else if (field.kind === "choice") {
+    const observed = new Set(fieldOptions(subject, field.key).map(normalizeKey));
+    if (observed.size) {
+      const filtered = items.filter((item) => observed.has(normalizeKey(item.label)));
+      if (filtered.length) items = filtered;
+    }
+  }
+
+  // Never lose the current value, even if the backend classification changed.
+  currentIds.forEach((id) => {
+    const item = catalog.byId.get(id);
+    if (item && !items.some((candidate) => candidate.id === id)) items.unshift(item);
+  });
+
+  const seen = new Set();
+  const deduped = items.filter((item) => {
+    const key = `${normalizeKey(item.label)}|${item.id}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  if (explicit.length) {
+    const order = new Map(explicit.map((label, index) => [normalizeKey(label), index]));
+    return deduped.sort((a, b) => (order.get(normalizeKey(a.label)) ?? 999) - (order.get(normalizeKey(b.label)) ?? 999) || a.label.localeCompare(b.label, "fr"));
+  }
+  return deduped.sort((a, b) => a.label.localeCompare(b.label, "fr"));
 }
 
 function createDatalist(id, values) {
@@ -3031,103 +3341,328 @@ function createDatalist(id, values) {
   return list;
 }
 
-function inferReferenceMode(metaType, raw, kind) {
-  if (metaType.startsWith("RefList:")) return "refList";
-  if (metaType.startsWith("Ref:")) return "ref";
-  if (metaType === "ChoiceList") return "choiceList";
-  if (typeof raw === "number" && targetCatalogMap(kind).has(Number(raw))) return "ref";
-  if (Array.isArray(raw) && listValues(raw).some((item) => typeof item === "number")) return "refList";
-  return "text";
+function createReadOnlyControl(raw, meta) {
+  const node = makeEl("div", "readonly-value", displayRawValue(raw, meta) || "Non renseigné");
+  node.dataset.readonly = "true";
+  return node;
 }
 
-function createReferenceControl(kind, raw, metaType, controlId) {
-  const mode = inferReferenceMode(metaType, raw, kind);
-  const catalog = targetCatalog(kind);
-  if ((mode === "ref" || mode === "refList") && catalog.length) {
-    const select = document.createElement("select");
-    select.id = controlId;
-    select.dataset.mode = mode;
-    if (mode === "refList") select.multiple = true;
-    if (mode === "ref") {
-      const empty = document.createElement("option");
-      empty.value = "";
-      empty.textContent = "";
-      select.appendChild(empty);
+function closePickerOnFocusOut(root, menu) {
+  root.addEventListener("focusout", () => {
+    setTimeout(() => {
+      if (!root.contains(document.activeElement)) menu.classList.add("hidden");
+    }, 120);
+  });
+}
+
+function createSingleReferencePicker(raw, meta, controlId, items, placeholder) {
+  const root = makeEl("div", "smart-picker");
+  root.id = controlId;
+  root.dataset.mode = "refCombo";
+  root._selectedId = Number(raw) || 0;
+
+  const shell = makeEl("div", "smart-picker-shell");
+  const input = document.createElement("input");
+  input.type = "text";
+  input.className = "smart-picker-input";
+  input.placeholder = placeholder || "Rechercher…";
+  const current = items.find((item) => item.id === root._selectedId) || referenceCatalogs.get(referenceTarget(meta.type))?.byId.get(root._selectedId);
+  input.value = current?.label || "";
+  const clear = makeEl("button", "smart-picker-clear", "×");
+  clear.type = "button";
+  clear.title = "Effacer la sélection";
+  const menu = makeEl("div", "smart-picker-menu hidden");
+
+  const render = () => {
+    const query = normalizeKey(input.value);
+    menu.replaceChildren();
+    const visible = items.filter((item) => !query || normalizeKey(item.label).includes(query)).slice(0, 120);
+    if (!visible.length) menu.appendChild(makeEl("div", "smart-picker-empty", "Aucun résultat"));
+    visible.forEach((item) => {
+      const option = makeEl("button", `smart-picker-option ${item.id === root._selectedId ? "is-selected" : ""}`.trim());
+      option.type = "button";
+      option.appendChild(makeEl("span", "", item.label));
+      if (item.id === root._selectedId) option.appendChild(makeEl("span", "smart-picker-option-mark", "✓"));
+      option.addEventListener("click", () => {
+        root._selectedId = item.id;
+        input.value = item.label;
+        menu.classList.add("hidden");
+      });
+      menu.appendChild(option);
+    });
+  };
+
+  input.addEventListener("focus", () => { render(); menu.classList.remove("hidden"); });
+  input.addEventListener("input", () => {
+    root._selectedId = 0;
+    render();
+    menu.classList.remove("hidden");
+  });
+  clear.addEventListener("click", () => {
+    root._selectedId = 0;
+    input.value = "";
+    render();
+    input.focus();
+  });
+  shell.append(input, clear);
+  root.append(shell, menu);
+  closePickerOnFocusOut(root, menu);
+  return root;
+}
+
+function createMultiReferencePicker(raw, meta, controlId, items, placeholder) {
+  const root = makeEl("div", "smart-picker");
+  root.id = controlId;
+  root.dataset.mode = "refListPicker";
+  root._selectedIds = new Set(listValues(raw).map(Number).filter(Boolean));
+  const shell = makeEl("div", "smart-picker-shell");
+  const input = document.createElement("input");
+  input.type = "text";
+  input.className = "smart-picker-input";
+  input.placeholder = placeholder || "Ajouter…";
+  const menu = makeEl("div", "smart-picker-menu hidden");
+
+  const itemById = new Map(items.map((item) => [item.id, item]));
+  listValues(raw).map(Number).filter(Boolean).forEach((id) => {
+    if (!itemById.has(id)) {
+      const fallback = referenceCatalogs.get(referenceTarget(meta.type))?.byId.get(id);
+      if (fallback) { items.push(fallback); itemById.set(id, fallback); }
     }
-    catalog.forEach((item) => {
+  });
+
+  const renderChips = () => {
+    shell.querySelectorAll(".smart-chip").forEach((chip) => chip.remove());
+    [...root._selectedIds].forEach((id) => {
+      const item = itemById.get(id);
+      const chip = makeEl("span", "smart-chip");
+      chip.appendChild(makeEl("span", "", item?.label || `#${id}`));
+      const remove = makeEl("button", "smart-chip-remove", "×");
+      remove.type = "button";
+      remove.addEventListener("click", () => {
+        root._selectedIds.delete(id);
+        renderChips();
+        renderMenu();
+      });
+      chip.appendChild(remove);
+      shell.insertBefore(chip, input);
+    });
+  };
+
+  const renderMenu = () => {
+    const query = normalizeKey(input.value);
+    menu.replaceChildren();
+    const visible = items.filter((item) => !query || normalizeKey(item.label).includes(query)).slice(0, 140);
+    if (!visible.length) menu.appendChild(makeEl("div", "smart-picker-empty", "Aucun résultat"));
+    visible.forEach((item) => {
+      const selected = root._selectedIds.has(item.id);
+      const option = makeEl("button", `smart-picker-option ${selected ? "is-selected" : ""}`.trim());
+      option.type = "button";
+      option.appendChild(makeEl("span", "", item.label));
+      option.appendChild(makeEl("span", "smart-picker-option-mark", selected ? "✓" : "+"));
+      option.addEventListener("click", () => {
+        if (selected) root._selectedIds.delete(item.id); else root._selectedIds.add(item.id);
+        input.value = "";
+        renderChips();
+        renderMenu();
+        input.focus();
+      });
+      menu.appendChild(option);
+    });
+  };
+
+  input.addEventListener("focus", () => { renderMenu(); menu.classList.remove("hidden"); });
+  input.addEventListener("input", () => { renderMenu(); menu.classList.remove("hidden"); });
+  shell.appendChild(input);
+  root.append(shell, menu);
+  renderChips();
+  closePickerOnFocusOut(root, menu);
+  return root;
+}
+
+function createTextAutocompleteControl(raw, controlId, values, multiple = false) {
+  if (!multiple) {
+    const input = document.createElement("input");
+    input.id = controlId;
+    input.type = "text";
+    input.value = asText(raw);
+    input.dataset.mode = "textAutocomplete";
+    const listId = `${controlId}_list`;
+    input.setAttribute("list", listId);
+    input._datalist = createDatalist(listId, values);
+    return input;
+  }
+
+  const root = makeEl("div", "smart-picker");
+  root.id = controlId;
+  root.dataset.mode = "choiceListPicker";
+  root._selectedValues = new Set(listValues(raw).map(asText).filter(Boolean));
+  const shell = makeEl("div", "smart-picker-shell");
+  const input = document.createElement("input");
+  input.type = "text";
+  input.className = "smart-picker-input";
+  input.placeholder = "Ajouter…";
+  const menu = makeEl("div", "smart-picker-menu hidden");
+  const allValues = uniqueValues([...values, ...root._selectedValues]);
+
+  const renderChips = () => {
+    shell.querySelectorAll(".smart-chip").forEach((chip) => chip.remove());
+    [...root._selectedValues].forEach((value) => {
+      const chip = makeEl("span", "smart-chip");
+      chip.appendChild(makeEl("span", "", value));
+      const remove = makeEl("button", "smart-chip-remove", "×");
+      remove.type = "button";
+      remove.addEventListener("click", () => { root._selectedValues.delete(value); renderChips(); renderMenu(); });
+      chip.appendChild(remove);
+      shell.insertBefore(chip, input);
+    });
+  };
+  const renderMenu = () => {
+    const query = normalizeKey(input.value);
+    menu.replaceChildren();
+    const visible = allValues.filter((value) => !query || normalizeKey(value).includes(query));
+    if (!visible.length && input.value.trim()) {
+      const add = makeEl("button", "smart-picker-option");
+      add.type = "button";
+      add.textContent = `Ajouter « ${input.value.trim()} »`;
+      add.addEventListener("click", () => {
+        root._selectedValues.add(input.value.trim()); input.value = ""; renderChips(); renderMenu(); input.focus();
+      });
+      menu.appendChild(add);
+    } else if (!visible.length) menu.appendChild(makeEl("div", "smart-picker-empty", "Aucun résultat"));
+    visible.forEach((value) => {
+      const selected = root._selectedValues.has(value);
+      const option = makeEl("button", `smart-picker-option ${selected ? "is-selected" : ""}`.trim());
+      option.type = "button";
+      option.appendChild(makeEl("span", "", value));
+      option.appendChild(makeEl("span", "smart-picker-option-mark", selected ? "✓" : "+"));
+      option.addEventListener("click", () => {
+        if (selected) root._selectedValues.delete(value); else root._selectedValues.add(value);
+        input.value = ""; renderChips(); renderMenu(); input.focus();
+      });
+      menu.appendChild(option);
+    });
+  };
+  input.addEventListener("focus", () => { renderMenu(); menu.classList.remove("hidden"); });
+  input.addEventListener("input", () => { renderMenu(); menu.classList.remove("hidden"); });
+  input.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" && input.value.trim()) {
+      event.preventDefault(); root._selectedValues.add(input.value.trim()); input.value = ""; renderChips(); renderMenu();
+    }
+  });
+  shell.appendChild(input);
+  root.append(shell, menu);
+  renderChips();
+  closePickerOnFocusOut(root, menu);
+  return root;
+}
+
+function createChoiceSelect(raw, meta, controlId, options, referenceItems = []) {
+  const select = document.createElement("select");
+  select.id = controlId;
+  const empty = document.createElement("option");
+  empty.value = "";
+  empty.textContent = "Sélectionner…";
+  select.appendChild(empty);
+
+  if (meta.type.startsWith("Ref:")) {
+    select.dataset.mode = "ref";
+    referenceItems.forEach((item) => {
       const option = document.createElement("option");
       option.value = String(item.id);
       option.textContent = item.label;
       select.appendChild(option);
     });
-    const selected = new Set(listValues(raw).map((value) => String(value)));
-    [...select.options].forEach((option) => { option.selected = selected.has(option.value); });
-    return select;
+    select.value = raw ? String(raw) : "";
+  } else {
+    select.dataset.mode = "choice";
+    orderedUniqueValues(options).forEach((value) => {
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = value;
+      select.appendChild(option);
+    });
+    select.value = asText(raw);
+    if (select.value !== asText(raw) && asText(raw)) {
+      const option = document.createElement("option");
+      option.value = asText(raw);
+      option.textContent = asText(raw);
+      select.appendChild(option);
+      select.value = asText(raw);
+    }
   }
-
-  const input = document.createElement("input");
-  input.id = controlId;
-  input.type = "text";
-  input.dataset.mode = metaType === "ChoiceList" ? "choiceList" : "text";
-  input.value = kind === "service" ? serviceLabel(raw) : kind === "actor" ? actorLabel(raw) : asText(raw);
-  const datalistId = `${controlId}_list`;
-  input.setAttribute("list", datalistId);
-  input._datalist = createDatalist(datalistId, catalog.map((item) => item.label));
-  return input;
-}
-
-function createGenericReferenceControl(raw, metaType, controlId, meta) {
-  const mode = metaType.startsWith("RefList:") ? "refList" : "ref";
-  const select = document.createElement("select");
-  select.id = controlId;
-  select.dataset.mode = mode;
-  if (mode === "refList") select.multiple = true;
-  if (mode === "ref") {
-    const empty = document.createElement("option");
-    empty.value = "";
-    empty.textContent = "";
-    select.appendChild(empty);
-  }
-  referenceItemsForMeta(meta).forEach((item) => {
-    const option = document.createElement("option");
-    option.value = String(item.id);
-    option.textContent = item.label;
-    select.appendChild(option);
-  });
-  const selected = new Set(listValues(raw).map((value) => String(value)));
-  [...select.options].forEach((option) => { option.selected = selected.has(option.value); });
   return select;
 }
 
 function createControl(subject, field, colId, raw, meta) {
   const controlId = `field_${subject.source}_${field.key}`;
-  let control;
   const type = meta.type || "Any";
+  const readonly = Boolean(field.readonly || meta.isFormula);
+  let control;
 
-  if (field.kind === "service" || field.kind === "actor") {
-    control = createReferenceControl(field.kind, raw, type, controlId);
-  } else if (type.startsWith("Ref:") || type.startsWith("RefList:")) {
-    control = createGenericReferenceControl(raw, type, controlId, meta);
-  } else if (field.kind === "textarea") {
+  if (readonly || type.startsWith("Attachments")) {
+    control = createReadOnlyControl(raw, meta);
+  } else if (field.kind === "service" || field.kind === "actor") {
+    const kindItems = field.kind === "service" ? services : actors;
+    if (type.startsWith("RefList:")) {
+      const items = referenceItemsForField(subject, field, raw, meta);
+      control = createMultiReferencePicker(raw, meta, controlId, items.length ? items : kindItems, field.kind === "service" ? "Ajouter un service…" : "Ajouter une personne…");
+    } else if (type.startsWith("Ref:")) {
+      const items = referenceItemsForField(subject, field, raw, meta);
+      control = createSingleReferencePicker(raw, meta, controlId, items.length ? items : kindItems, field.kind === "service" ? "Rechercher un service…" : "Rechercher une personne…");
+    } else if (type === "ChoiceList") {
+      control = createTextAutocompleteControl(raw, controlId, kindItems.map((item) => item.label), true);
+    } else {
+      control = createTextAutocompleteControl(field.kind === "service" ? serviceLabel(raw) : actorLabel(raw), controlId, kindItems.map((item) => item.label), false);
+    }
+  } else if (type.startsWith("RefList:")) {
+    control = createMultiReferencePicker(raw, meta, controlId, referenceItemsForField(subject, field, raw, meta), "Ajouter une valeur…");
+  } else if (type.startsWith("Ref:")) {
+    const items = referenceItemsForField(subject, field, raw, meta);
+    if (field.kind === "choice") control = createChoiceSelect(raw, meta, controlId, [], items);
+    else control = createSingleReferencePicker(raw, meta, controlId, items, "Rechercher une valeur…");
+  } else if (type === "ChoiceList") {
+    const values = orderedUniqueValues([...explicitFieldOptions(subject, field), ...choiceOptionsFromMetadata(meta), ...fieldOptions(subject, field.key)]);
+    control = createTextAutocompleteControl(raw, controlId, values, true);
+  } else if (field.kind === "choice" || type === "Choice") {
+    const options = orderedUniqueValues([...explicitFieldOptions(subject, field), ...choiceOptionsFromMetadata(meta), ...fieldOptions(subject, field.key), asText(raw)]);
+    control = createChoiceSelect(raw, meta, controlId, options);
+  } else if (field.kind === "textChoice") {
+    control = createTextAutocompleteControl(raw, controlId, fieldOptions(subject, field.key), false);
+  } else if (field.kind === "textarea" || (type === "Text" && asText(raw).length > 120)) {
     control = document.createElement("textarea");
     control.id = controlId;
     control.value = asText(raw);
-  } else if (field.kind === "date" && (type === "Date" || type === "DateTime" || dateToISO(raw))) {
+  } else if (field.kind === "date" || type === "Date" || type === "DateTime") {
     control = document.createElement("input");
     control.id = controlId;
-    control.type = "date";
-    control.value = dateToISO(raw);
-    control.dataset.mode = "date";
+    control.type = type === "DateTime" && !field.readonly ? "datetime-local" : "date";
+    if (control.type === "datetime-local" && raw) {
+      const date = new Date(typeof raw === "number" ? (raw > 1e11 ? raw : raw * 1000) : raw);
+      control.value = Number.isNaN(date.getTime()) ? "" : date.toISOString().slice(0, 16);
+    } else control.value = dateToISO(raw);
+    control.dataset.mode = control.type === "datetime-local" ? "datetime" : "date";
+  } else if (type === "Bool" || type === "Toggle") {
+    const wrapper = makeEl("label", "toggle-control");
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.checked = Boolean(raw);
+    wrapper.append(checkbox, makeEl("span", "", checkbox.checked ? "Oui" : "Non"));
+    checkbox.addEventListener("change", () => { wrapper.querySelector("span").textContent = checkbox.checked ? "Oui" : "Non"; });
+    wrapper._checkbox = checkbox;
+    wrapper.dataset.mode = "bool";
+    control = wrapper;
+  } else if (["Int", "Numeric"].includes(type)) {
+    control = document.createElement("input");
+    control.id = controlId;
+    control.type = "number";
+    if (type === "Int") control.step = "1";
+    control.value = raw === null || raw === undefined ? "" : String(raw);
+    control.dataset.mode = type === "Int" ? "int" : "numeric";
   } else {
     control = document.createElement("input");
     control.id = controlId;
     control.type = "text";
     control.value = asText(raw);
-    if (field.kind === "choice") {
-      const listId = `${controlId}_list`;
-      control.setAttribute("list", listId);
-      control._datalist = createDatalist(listId, fieldOptions(subject, field.key));
-    }
   }
 
   control.dataset.colId = colId;
@@ -3135,14 +3670,16 @@ function createControl(subject, field, colId, raw, meta) {
   control.dataset.metaType = type;
   control.dataset.kind = field.kind || "text";
   control.dataset.original = JSON.stringify(comparableValue(raw, type, field.kind));
-  if (field.readonly || meta.isFormula) control.disabled = true;
+  if (readonly) control.dataset.readonly = "true";
   return control;
 }
 
 function comparableValue(value, type, kind) {
   if (kind === "date" || type === "Date" || type === "DateTime") return dateToISO(value);
-  if (type.startsWith("RefList:") || type === "ChoiceList") return listValues(value).map((item) => String(item));
+  if (type.startsWith("RefList:") || type === "ChoiceList") return listValues(value).map((item) => String(item)).sort();
   if (type.startsWith("Ref:")) return value ? Number(value) : 0;
+  if (type === "Bool" || type === "Toggle") return Boolean(value);
+  if (["Int", "Numeric"].includes(type)) return value === "" || value === null || value === undefined ? null : Number(value);
   if (kind === "service") return serviceLabel(value);
   if (kind === "actor") return actorLabel(value);
   return asText(value);
@@ -3152,21 +3689,48 @@ function controlValue(control) {
   const type = control.dataset.metaType || "Any";
   const kind = control.dataset.kind || "text";
   const mode = control.dataset.mode || "";
-  if (control.tagName === "SELECT" && control.multiple) {
-    const values = [...control.selectedOptions].map((option) => Number(option.value));
-    return type.startsWith("RefList:") ? ["L", ...values] : type === "ChoiceList" ? ["L", ...values.map(String)] : values;
-  }
-  if (control.tagName === "SELECT" && (mode === "ref" || type.startsWith("Ref:"))) return control.value ? Number(control.value) : 0;
-  if (mode === "choiceList" || type === "ChoiceList") {
-    return ["L", ...control.value.split(/[,;\n]+/).map((value) => value.trim()).filter(Boolean)];
-  }
-  if (control.type === "date" || kind === "date" || type === "Date" || type === "DateTime") return control.value || null;
-  if ((kind === "service" || kind === "actor") && type.startsWith("Ref:")) {
-    const catalog = targetCatalog(kind);
-    const found = catalog.find((item) => normalizeKey(item.label) === normalizeKey(control.value));
-    return found ? found.id : 0;
-  }
+  if (mode === "refCombo") return Number(control._selectedId || 0);
+  if (mode === "refListPicker") return ["L", ...[...control._selectedIds].map(Number).filter(Boolean)];
+  if (mode === "choiceListPicker") return ["L", ...[...control._selectedValues].map(String)];
+  if (mode === "bool") return Boolean(control._checkbox?.checked);
+  if (control.tagName === "SELECT" && mode === "ref") return control.value ? Number(control.value) : 0;
+  if (control.tagName === "SELECT") return control.value;
+  if (mode === "date") return control.value || null;
+  if (mode === "datetime") return control.value ? new Date(control.value).toISOString() : null;
+  if (mode === "int") return control.value === "" ? null : parseInt(control.value, 10);
+  if (mode === "numeric") return control.value === "" ? null : Number(control.value);
+  if (type === "ChoiceList") return ["L", ...control.value.split(/[,;\n]+/).map((value) => value.trim()).filter(Boolean)];
   return control.value;
+}
+
+function normalizeStoredValue(value, meta) {
+  const type = meta?.type || "Any";
+  if (type.startsWith("RefList:") || type === "ChoiceList") return listValues(value).map(String).sort();
+  if (type.startsWith("Ref:")) return value ? Number(value) : 0;
+  if (type === "Date" || type === "DateTime") return dateToISO(value);
+  if (type === "Bool" || type === "Toggle") return Boolean(value);
+  if (["Int", "Numeric"].includes(type)) return value === "" || value === null || value === undefined ? null : Number(value);
+  return asText(value);
+}
+
+async function verifySourceUpdate(subject, requestedChanges) {
+  try {
+    const raw = await safeFetchTable(subject.tableId);
+    const row = tableRows(raw).find((candidate) => Number(candidate.id) === Number(subject.rowId));
+    if (!row) return { ok: false, fields: ["ligne source introuvable"] };
+    const mismatches = [];
+    Object.entries(requestedChanges).forEach(([colId, expected]) => {
+      const meta = columnMeta(subject.table, colId);
+      if (meta.isFormula) return;
+      const actualNormalized = normalizeStoredValue(row[colId], meta);
+      const expectedNormalized = normalizeStoredValue(expected, meta);
+      if (JSON.stringify(actualNormalized) !== JSON.stringify(expectedNormalized)) mismatches.push(meta.label || colId);
+    });
+    return { ok: !mismatches.length, fields: mismatches };
+  } catch (error) {
+    console.warn("Vérification de l'enregistrement impossible", error);
+    return { ok: true, skipped: true };
+  }
 }
 
 function openDrawer(subject) {
@@ -3178,6 +3742,8 @@ function openDrawer(subject) {
 
   const form = $("editForm");
   form.replaceChildren();
+  const writeNote = makeEl("p", "source-write-note", `Les modifications sont enregistrées directement dans la table source « ${activeSubject.tableId} », ligne ${activeSubject.rowId}.`);
+  form.appendChild(writeNote);
   const layout = EDIT_LAYOUTS[subject.source] || [];
   layout.forEach((group) => {
     const section = makeEl("section", "form-section");
@@ -3196,7 +3762,8 @@ function openDrawer(subject) {
       label.setAttribute("for", control.id);
       wrapper.appendChild(control);
       if (control._datalist) wrapper.appendChild(control._datalist);
-      if (meta.isFormula) wrapper.appendChild(makeEl("small", "", "Colonne calculée dans Grist — consultation uniquement."));
+      if (field.help) wrapper.appendChild(makeEl("small", "form-field-help", field.help));
+      if (meta.isFormula) wrapper.appendChild(makeEl("small", "form-field-help", "Colonne calculée dans Grist — consultation uniquement."));
       grid.appendChild(wrapper);
     });
     section.appendChild(grid);
@@ -3222,31 +3789,33 @@ function currentTimestampForColumn(table, colId) {
 
 async function saveActiveSubject() {
   if (!activeSubject) return;
-  const changed = {};
+  const subject = activeSubject;
+  const userChanges = {};
   $("editForm").querySelectorAll("[data-col-id]").forEach((control) => {
-    if (control.disabled) return;
+    if (control.dataset.readonly === "true" || control.disabled) return;
     const original = JSON.parse(control.dataset.original || "null");
     const value = controlValue(control);
     const comparable = comparableValue(value, control.dataset.metaType, control.dataset.kind);
-    if (JSON.stringify(original) !== JSON.stringify(comparable)) changed[control.dataset.colId] = value;
+    if (JSON.stringify(original) !== JSON.stringify(comparable)) userChanges[control.dataset.colId] = value;
   });
 
-  const table = activeSubject.table;
-  if (activeSubject.source === "emm" && table.columns.modifiedAt) {
-    changed[table.columns.modifiedAt] = currentTimestampForColumn(table, table.columns.modifiedAt);
-  }
-  if (activeSubject.source === "conception") {
-    if (table.columns.status && Object.prototype.hasOwnProperty.call(changed, table.columns.status) && table.columns.statusTimestamp) {
-      changed[table.columns.statusTimestamp] = currentTimestampForColumn(table, table.columns.statusTimestamp);
-    }
-    if (table.columns.stage && Object.prototype.hasOwnProperty.call(changed, table.columns.stage) && table.columns.stageTimestamp) {
-      changed[table.columns.stageTimestamp] = currentTimestampForColumn(table, table.columns.stageTimestamp);
-    }
-  }
-
-  if (!Object.keys(changed).length) {
+  if (!Object.keys(userChanges).length) {
     showToast("Aucune modification à enregistrer");
     return;
+  }
+
+  const changed = { ...userChanges };
+  const table = subject.table;
+  if (subject.source === "emm" && table.columns.modifiedAt) {
+    changed[table.columns.modifiedAt] = currentTimestampForColumn(table, table.columns.modifiedAt);
+  }
+  if (subject.source === "conception") {
+    if (table.columns.status && Object.prototype.hasOwnProperty.call(userChanges, table.columns.status) && table.columns.statusTimestamp) {
+      changed[table.columns.statusTimestamp] = currentTimestampForColumn(table, table.columns.statusTimestamp);
+    }
+    if (table.columns.stage && Object.prototype.hasOwnProperty.call(userChanges, table.columns.stage) && table.columns.stageTimestamp) {
+      changed[table.columns.stageTimestamp] = currentTimestampForColumn(table, table.columns.stageTimestamp);
+    }
   }
 
   try {
@@ -3254,9 +3823,15 @@ async function saveActiveSubject() {
       throw new Error("Écriture Grist indisponible : accès complet requis.");
     }
     await withTimeout(grist.docApi.applyUserActions([
-      ["UpdateRecord", activeSubject.tableId, activeSubject.rowId, changed]
-    ], { parseStrings: true }), "Enregistrement Grist");
-    showToast("Modifications enregistrées");
+      ["UpdateRecord", subject.tableId, subject.rowId, changed]
+    ], { parseStrings: true }), `Enregistrement dans ${subject.tableId}`);
+
+    const verification = await verifySourceUpdate(subject, userChanges);
+    if (!verification.ok) {
+      throw new Error(`La mise à jour n'a pas pu être confirmée pour : ${verification.fields.join(", ")}. La fiche reste ouverte.`);
+    }
+
+    showToast(`Modifications enregistrées dans ${subject.tableId}`);
     closeDrawer();
     await loadAll();
   } catch (error) {
